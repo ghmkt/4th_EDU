@@ -7,7 +7,7 @@
 ## Session
 
 - 교육 세션과 관련된 각종 자료
-    - 송인성 교수님 세션: Framework of Data Driven Marketing
+    - Session 00. Framework of Data Driven Marketing - 송인성 교수님 (9/20)
     - Session 01. Anaconda - 최원빈 (9/20)
     - Session 02. Basic Python - 김현세, 배민영 (추석 연휴)
 
