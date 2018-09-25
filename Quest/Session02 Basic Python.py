@@ -24,7 +24,9 @@ def solution(n, money):
 
         for i in range(int(n/large)+1):
             answer= answer+solution(n-i*large,new_money)
-    
+
+            
+    answer = answer % 1000000007
     return answer
 
 # solution(5,[1,2,5])
