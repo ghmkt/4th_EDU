@@ -3,10 +3,15 @@
 # 위 링크의 문제를 풀어주세요.
 def solution(n, money):
     answer=0
+    # 화폐 종류가 1가지일 경우에는 나눠떨어지는 경우밖에 없음!
     if len(money)==1:
         if n%money[0]==0:
             return 1
-    
+    '''
+    화폐 종류가 2가지일 경우에는 
+    n을 money중 큰 돈으로 한개씩 뺀 나머지들이 
+    money중 작은 돈으로 나눠떨어질때 가능
+    '''
     elif len(money)==2:
         mylist = []
         small=money[0]
@@ -16,7 +21,11 @@ def solution(n, money):
             mylist.append(n-i*large)
         answer = sum(list(map(lambda x: x%small==0, mylist)))
 
-        
+    '''
+    화폐 종류가 3가지 이상일 때는 
+    n을 money중 큰 돈으로 한개씩 뺀 나머지들을 
+    money에서 큰돈뺀 나머지 화폐들로 지불할수있는방법의 합! 
+    '''
     else: # len(money)>2
         mylist = []
         large=money[-1]
@@ -47,6 +56,7 @@ try:
     data = pd.read_csv("C:\\Users\\Yang\\Downloads\\diamonds_data.csv")
 except FileNotFoundError:
     print('wrong file path')
-    
+
+# 뒤집기
 new_data = data.sort_index(axis=1, ascending=False)
 new_data.to_csv("C:\\Users\\Yang\\Downloads\\new_data.csv")
