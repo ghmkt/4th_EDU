@@ -10,6 +10,7 @@
     - Session 00. Framework of Data Driven Marketing - 송인성 교수님 (9/20)
     - Session 01. Anaconda - 최원빈 (9/20)
     - Session 02. Basic Python - 김현세, 배민영 (추석 연휴)
+    - Session 03. Python for Data Analysis & Visualization - 김현세 (9/27)
 
 ## Quest
 
