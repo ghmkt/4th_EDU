@@ -1,7 +1,7 @@
 # 1
 # https://programmers.co.kr/learn/courses/30/lessons/12907
 # 위 링크의 문제를 풀어주세요.
-
+Nothing
 
 # 2
 # 짝수인 원소에 대응하는 인덱스의 합을 리턴하는 함수 f4()를 만들어주세요. 단, 제어문(for, while, if)을 사용하지 마세요!
