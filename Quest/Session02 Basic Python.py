@@ -2,15 +2,16 @@
 # https://programmers.co.kr/learn/courses/30/lessons/12907
 # 위 링크의 문제를 풀어주세요.
 
-def solution(n, money):
-    if n<0:
-        return 0
-    elif n==0:
-        return 1 
-    else:
-        answer = int((solution(n, money-1) + solution(n-money, money)))%1000000007
-        return answer
-# 며칠동안 했는데 제대로 결과값이 안나와서 세션 전까지 계속 시도해 보겠습니다..
+for n in range(1, 100001):
+    for m in range(0, 101):
+        def solution(s, m , n):
+            if n == 0:
+                return 1
+            elif n < 0:
+                return 0
+            else:
+                return (solution(s, m-1, n) + solution(s, m, n-s[m-1])) % 100000007
+#recursion 방식을 찾아 다시 시도해 보았는데, 이번에는 recursionerror가 나와서 다시 해보겠습니다
 
 # 2
 # 짝수인 원소에 대응하는 인덱스의 합을 리턴하는 함수 f4()를 만들어주세요. 단, 제어문(for, while, if)을 사용하지 마세요!
