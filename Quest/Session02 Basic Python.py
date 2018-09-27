@@ -2,6 +2,7 @@
 # https://programmers.co.kr/learn/courses/30/lessons/12907
 # 위 링크의 문제를 풀어주세요.
 
+# 풀이 1번
 def solution(n, money):
   res = [0]*(n+1)
   res[0] = 1
@@ -10,6 +11,7 @@ def solution(n, money):
       res[j] += res[j-i]
   return res[n]
 
+# 풀이 2번
 def solution(n, money): # 재귀함수 이용
   if len(money) == 1:
     if n%money[0] == 0:
