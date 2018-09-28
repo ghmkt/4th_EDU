@@ -22,5 +22,5 @@ low = pro2.loc[pro2["sexratio"] < 110, :] # 평균 성비가 100미만인 행만
 
 plt.scatter(high['gdp'], high['unemployment'], c = "b", marker= "x") # high 그룹을 산점도로 표현
 plt.scatter(low['gdp'], low['unemployment'], c = "r", marker= "^")  # low 그룹을 산점도로 표현 
-plt.xlabel("GDP") ; plt.ylabel("UNEMPLOYMENT") # 라벨을 할당
+plt.xlabel("GDP") ; plt.ylabel("UNEMPLOYMENT") # 라벨 추가
 plt.show()
