@@ -3,8 +3,8 @@
 import pandas as pd 
 df = pd.read_csv("sex ratio.csv")
 
-df.rename(columns = {"Unnamed: 0"  : "지역"}, inplace = True) # 빈 컬럼명을 "지역으로 할당"
-df2 = pd.melt(df,id_vars = ["지역"], var_name ="연도", value_name = "성비" ) # wide 데이터를 long 데이터로 변환"
+df.rename(columns = {"Unnamed: 0"  : "지역"}, inplace = True) # 빈 컬럼명을 "지역"으로 할당
+df2 = pd.melt(df,id_vars = ["지역"], var_name ="연도", value_name = "성비" ) # wide 데이터를 long 데이터로 변환
 df2 = df2.sort_values(["지역","연도"]) # 지역과 연도로 재정렬
 df2 = df2.reset_index(drop = True) # 새로운 인덱스로 갱신
 df2.to_csv("new sex ratio.csv", encoding= "EUC - KR") # 변화된 파일 저장
