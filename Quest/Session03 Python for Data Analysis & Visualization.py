@@ -29,7 +29,7 @@ for i in range(dfv.shape[0]-1):
 
 # 새 데이터프레임 제작
 new_df = pd.DataFrame({'지역':regionlist, '연도':yearlist, '성비':sexratio})
-new_df.to_csv('new sex ratio.csv')
+new_df.to_csv('new sex ratio.csv',encoding="euc-kr")
 
 
 # 2
