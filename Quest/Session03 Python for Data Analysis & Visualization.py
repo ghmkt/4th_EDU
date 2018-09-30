@@ -35,3 +35,40 @@ new_df.to_csv('new sex ratio.csv',encoding="euc-kr")
 # 2
 # ‘province data.csv’로부터 지역별로 전 기간에 걸친 평균 gdp와 unemploymen를 구한 뒤, 이를 산포도로 표현하세요.
 # 단, 평균 성비가 110 이상인 지역의 산포도는 파란색 X 모양의 점, 110 미만인 지역의 산포도는 빨간색 세모 모양의 점으로 표현하세요.
+
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+
+df = pd.read_csv('province data.csv', engine = 'python', index_col = 0)
+idlist = set(df.index.values)
+
+# GDP,UNEMPLOYMENT 평균 구하고, SEX_RATIO에 따른 마커,색 얻기
+gdp=[]
+unemp=[]
+colors=[]
+markers=[]
+
+for i in idlist:
+    mean_gdp=np.mean(df.loc[i,'gdp'])
+    mean_unemp=np.mean(df.loc[i,'unemployment'])
+    mean_sexratio=np.mean(df.loc[i,'sexratio'])
+
+    gdp.append(mean_gdp)
+    unemp.append(mean_unemp)
+    if mean_sexratio <=110:
+        colors.append('red')
+        markers.append('^')
+    else:
+        colors.append('blue')
+        markers.append('x')
+
+# SCATTER로 마커 모양 지정이 안되서 PLOT 사용
+for i in range(len(gdp)):
+    plt.plot(gdp[i],unemp[i],color=colors[i],marker=markers[i])
+# plt.scatter(gdp, unemp, color=colors, marker = markers)
+
+plt.xlabel("GDP")
+plt.ylabel("UNEMPLOYMENT")
+plt.show()
+
