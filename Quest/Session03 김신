@@ -1,6 +1,4 @@
 # Quest 제출 시 제목을 'Session03 이름'으로 해주세요. ex. Session03 김현세
-
-
 # 1
 # numpy, pandas를 활용하여, ‘sex ratio.csv’로부터 아래와 같은 형태를 가진 ‘new sex ratio.csv’를 반환하는 코드를 구현해주세요.
 
