@@ -12,7 +12,7 @@ year = []                     # 연도 리스트 만들기
 for v in df.values:
     for c in df.columns.values:
         year.append(c)
-print(len(year))              # 처음에 무슨 이유인지 array 길이가 안맞다고 하여 확인하는 코드를 삽입했습니다
+print(len(year))              # 처음에 무슨 이유인지 계속 array 길이가 안맞다고 하여 확인하는 코드를 삽입했습니다
 
 a = df.values                 # 성비 리스트 만들기
 sr = np.array(a).tolist()     # 밸류 array를 리스트 형태로 전환
@@ -30,8 +30,25 @@ type(region)
 
 temp = {"지역": region, "연도": year, "성비": sexratio}   # 새로운 데이터프레임 생성
 newdf = pd.DataFrame(temp)
-newdf.to_csv("C:", encoding = 'EUC-KR')                 # 저장 및 
+newdf.to_csv("C:", encoding = 'EUC-KR')                 # 저장 및 인코딩
 
 # 2
 # ‘province data.csv’로부터 지역별로 전 기간에 걸친 평균 gdp와 unemploymen를 구한 뒤, 이를 산포도로 표현하세요.
 # 단, 평균 성비가 110 이상인 지역의 산포도는 파란색 X 모양의 점, 110 미만인 지역의 산포도는 빨간색 세모 모양의 점으로 표현하세요.
+
+
+import pandas as pd
+from matplotlib import pyplot as plt
+
+df = pd.read_csv("C:\province data.csv", engine = 'python')
+new = df.groupby(['id']).mean() #데이터들을 지역별로 평균을 내어 묶음
+
+a = new.loc[new["sexratio"] >= 110, ] #성비 110을 기준으로 데이터 분류
+b = new.loc[new["sexratio"] < 110, ]
+
+plt.scatter(a['gdp'], a['unemployment'], c = "red", marker = "x")  #분류한 데이터에 맞는 색과 마커를 지정하여 산점도 작성
+plt.scatter(b['gdp'], b['unemployment'], c = 'blue', marker = '^')
+
+plt.xlabel('GDP')           #라벨지정
+plt.ylabel('UNEMPLOYMENT')
+plt.show()
