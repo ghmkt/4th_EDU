@@ -65,8 +65,7 @@ for i in idlist:
 
 # SCATTER로 마커 모양 지정이 안되서 PLOT 사용
 for i in range(len(gdp)):
-    plt.plot(gdp[i],unemp[i],color=colors[i],marker=markers[i])
-# plt.scatter(gdp, unemp, color=colors, marker = markers)
+    plt.scatter(gdp[i],unemp[i],color=colors[i],marker=markers[i])
 
 plt.xlabel("GDP")
 plt.ylabel("UNEMPLOYMENT")
