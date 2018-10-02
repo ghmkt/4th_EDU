@@ -1,0 +1,79 @@
+# Quest 제출 시 제목을 'Session04 이름'으로 해주세요. ex. Session04 이재경
+
+
+# Crawling Quest
+# http://news.naver.com/main/list.nhn?mode=LS2D&mid=shm&sid1=100&sid2=269
+# 위의 주소는 네이버 정치 일반 기사 페이지의 주소입니다. 한 페이지에는 20개의 기사가 있습니다. 
+# 최신 5페이지에 걸쳐 100개의 제목과 기사를 가져올 수 있는 코드를 작성해주세요.
+
+# 모듈을 불러온다. 
+from pandas import Series, DataFrame
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+import re
+
+# 특정 기사의 본문과 제목을 가져오는 함수를 정의한다. 
+def NewsCraw(url):
+    html = urlopen(url) # url에서 html을 가져온다. 
+    soup = BeautifulSoup(html,"html.parser", from_encoding = "utf-8") # bs4에서 파싱할 수 있는 구조로 바꾼다.
+    content = soup.find(id = 'articleBodyContents') # id로 본문 내용을 가져온다. 
+    hangul = re.compile("[^ ㄱ-ㅎ|가-힣.""]+") # 한글,.,띄어쓰기가 아닌 문자(영어, 특수문자, 숫자 등등)를 나타내는 정규표현식을 만든다.
+    content = str(content) # html 객체?를 문자열로 바꾼다.
+    content = hangul.sub("",content) # 정규표현식에 해당하는 패턴을 지운다. 
+    content = re.sub("본문 내용  플레이어   플레이어    오류를 우회하기 위한 함수 추가","",content) # 불필요한 한글 패턴 제거
+    content = re.sub('본문 내용  플레이어   동영상 뉴스       영상 플레이어   플레이어    오류를 우회하기 위한 함수 추가','',content)
+    content = re.sub("본문 내용  플레이어   동영상 뉴스 .      영상 플레이어   플레이어    오류를 우회하기 위한 함수 추가",'',content)
+    title = soup.find("h3",{"id":"articleTitle"}).find(text=True) # 제목을 가져온다. 
+    return [title ,content] # 제목과 내용을 반환한다. 
+
+# 각각의 뉴스 목록 페이지에서 개별 뉴스에 해당하는 html을 가져와서 articles에 저장한다. 
+url = "https://news.naver.com/main/list.nhn?mode=LS2D&sid2=269&sid1=100&mid=shm&date=20181002&page=" # 뉴스기사 목록 url
+
+articles = []
+for i in range(1,6):
+    print(i) # 인덱스 확인.
+    page_url = url+str(i) # i를 문자열로 변경.
+    page_html = urlopen(page_url) 
+    page_soup = BeautifulSoup(page_html,"html.parser",from_encoding = "utf-8")
+    articles.extend(page_soup.findAll("dt"))  
+    
+# articles에 저장된 뉴스 html에서 해당 뉴스로 들어가는 하이퍼링크에 해당하는 부분을 가져와 url_list를 만든다. 
+url_list = []
+for link in articles:
+    url_list.append(link.find("a")["href"])
+    url_list = list(set(url_list))
+
+# 앞서 정의된 함수를 사용해 뉴스에서 제목과 내용을 가져온다.
+df = DataFrame(columns=("기사제목","본문내용"))
+for i, url in enumerate(url_list):
+    df.loc[i] = NewsCraw(url)
+
+# 총 100개의 기사가 있는지 확인한다. 
+len(df)   
+
+# Machine Learning Quest는 아래 1, 2 중 택1입니다.
+
+# Machine Learning Quest 1
+# 'caschool.csv' 데이터에서 str과 avginc변수를 통해 read_scr을 예측할 수 있는 y=a*x1+b*x2+c 모형으로 Cost function을 minimize해보세요.
+
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv("caschool.csv")
+X1 = df["str"] ; X2 = df["avginc"] # 설명변수 
+Y = df["read_scr"] # 반응변수
+m = len(df.index) # n의 개수
+
+# Hypothesis: Y = aX1 + bX2 + c  
+# Cost Funtion:
+def CF(Beta):
+    Yhat = Beta[0]*X1 + Beta[1]*X2 + Beta[2]
+    SSE = sum((Yhat - Y)**2)
+    return(1/(2*m)*SSE)
+
+# Minimize using SciPy
+from scipy import optimize as op
+result = op.minimize(CF,(10,10,10))
+result
+
+
