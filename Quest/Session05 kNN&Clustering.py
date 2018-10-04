@@ -43,6 +43,7 @@ def yval(y):
     return y_value
 
 #yval('0_0.txt')
+#파일의 맨 앞글자만 따오면 굳이 파일을 열어보지 않더라도 그게 무슨 숫자인지 식별이 가능합니다.
 
 
 # 3. 데이터를 X_train, y_train, X_test, y_test로 나누세요.
@@ -56,7 +57,6 @@ for i in range(0, len(file_X)):
     file_Y += map(int, file_X[i][0])
 
 #file_Y는 file_X로 부터 Y의, 즉 무슨 숫자를 나타내는 지에 관한 정보를 모두 빼낸 자료입니다.
-#파일의 맨 앞글자만 따오면 굳이 파일을 열어보지 않더라도 그게 무슨 숫자인지 식별이 가능합니다.
 
 #이제 file_X와 file_Y를 통해서 test split을 해주고자 합니다.
 #X에 yet을 붙인 이유는, 전부 아직 파일명일 뿐 vec 함수를 통해 진짜 벡터 데이터셋에는 접근하지 않았기 때문입니다.
