@@ -1,0 +1,6 @@
+# 제출 시 제목을 Session07 이름으로 해주세요.
+
+# Surprise 내장 영화 데이터를 로드하여 “UBCF hardcoding.ipynb” 내의 코드를 IBCF 코드로 바꾸고,
+# 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
+# 단, 5-fold Cross Validation을 시행하여, Absolute Error의 평균을 최종적으로 출력해주세요.
+
