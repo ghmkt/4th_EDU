@@ -1,0 +1,88 @@
+# 제출 시 제목은 Session05 이름으로 해주세요!
+# kNN&Clustering의 퀘스트 코드를 아래에 기입해주세요.
+
+import pandas as pd
+import numpy as np
+from os import listdir 
+import matplotlib.pyplot as plt
+import sklearn
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+
+# 1. 파일명을 인자로 받아서 (1, 1024) 백터를 반환하는 함수를 정의하세요.
+train_txts = listdir('trainingDigits') # 폴더에서 파일이름들을 불러온다. 
+test_txts = listdir('testDigits') # 폴더에서 파일이름들을 불러온다. 
+
+file = pd.read_csv("trainingDigits\\"+train_txts[0], header = None) # 파일을 불러온다. 
+
+def ftv(file):
+    file = file.T # 인덱싱을 위해 transpoes 시킨다.  
+    vector = []
+    for i in file:
+        for j in file[i]:
+            vector.extend(j)
+    vector = list(map(int,vector)) # map 함수를 사용해서 모든 원소를 int로 바꾼다. 
+    return vector
+
+# 2. 파일명을 인자로 받아서 Y값을 반환하는 함수를 정의하세요.
+
+file_name = train_txts[0]
+
+def Y(file_name):
+    return(file_name[0])
+    
+# 3. 데이터를 X_train, y_train, X_test, y_test로 나누세요.
+
+X_train = []
+Y_train = []
+for i in train_txts:
+    file = pd.read_csv("trainingDigits\\"+i, header = None)
+    X_train.append(ftv(file))
+    Y_train.append(Y(i))
+
+X_test = []
+Y_test = []
+for i in test_txts:
+    file = pd.read_csv("testDigits\\"+i, header = None)
+    X_test.append(ftv(file))
+    Y_test.append(Y(i))
+
+
+# 4. 1~10의 k에 대해 KNN을 시행하고 테스트셋에 대한 스코어를 그래프로 그리세요 (sklearn 이용)
+
+X_train = np.array(X_train)
+Y_train = np.array(Y_train)
+X_test = np.array(X_test)
+Y_test = np.array(Y_test)
+
+scores = []
+for i in range(1,11):
+    KNN = KNeighborsClassifier(n_neighbors = i)
+    KNN.fit(X_train,Y_train)
+    Y_predict = KNN.predict(X_test)
+    score = KNN.score(X_test,Y_test)
+    scores.append(score)
+
+scores = pd.DataFrame(scores)
+scores["Number of K"] = range(1,11) # K 수를 담은 열을 추가한다. 
+scores.rename(columns = {0 : "score"}, inplace = True) # 빈 컬럼명을 score로 바꾼다. 
+scores
+
+plt.plot(scores["Number of K"], scores["score"],)
+plt.xlabel("Number of K") # X축 설명
+plt.ylabel("score") # Y축 설명.
+plt.grid(True) # 그리드 추가.
+plt.xticks(scores["Number of K"]) # 모든 K를 그래프에 표시.
+plt.scatter(scores["Number of K"][scores["score"].idxmax()], # score가 최대인 점을 표시.
+            scores["score"].max(), c = "r", marker= "x", s = 200) 
+plt.show()
+
+# 5. 최적의 K로 testdata에 넣어 정확도 측정
+scores["Number of K"][scores["score"].idxmax()] # 최적 K = 3
+    
+KNN = KNeighborsClassifier(n_neighbors = 3)
+KNN.fit(X_train,Y_train)
+Y_predict = KNN.predict(X_test)
+score = KNN.score(X_test,Y_test)
+print(score)
