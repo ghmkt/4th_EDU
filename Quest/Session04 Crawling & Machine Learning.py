@@ -96,7 +96,7 @@ def beta(b):
     value = 0
     for i in range(0, len(new)):
         value += ((b[1]*new.iloc[i,1] + b[2]*new.iloc[i,2] + b[0] - new.iloc[i,0])**2) / (2*len(new))
-        return value
+    return value
     
 
 result = op.minimize(beta, (2, 15, 18))
@@ -123,7 +123,7 @@ def cost(beta):
     value = 0
     for i in range(0, len(new)):
         value += ((beta[1]*new.iloc[i,1] + beta[2]*new.iloc[i,2] + beta[0] - new.iloc[i,0])**2) / (2*len(new))
-        return value
+    return value
 
 def costd(beta) :
     J0 = 0
