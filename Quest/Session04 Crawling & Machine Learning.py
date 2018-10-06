@@ -45,7 +45,24 @@ print(set(titles))
 
 # Machine Learning Quest 1
 # 'caschool.csv' 데이터에서 str과 avginc변수를 통해 read_scr을 예측할 수 있는 y=a*x1+b*x2+c 모형으로 Cost function을 minimize해보세요.
+import pandas as pd
+from scipy import optimize as op
+from matplotlib import pyplot as plt
 
-# Machine Learning Quest 2
-# 앤드류 강의 week1과 week2에서 필요한 강의 듣고 중요 내용 요약해서 올리기
-# https://www.coursera.org/learn/machine-learning
+# 파일 읽고, 필요한 부분만 df에 저장
+df = pd.read_csv('caschool.csv', engine = 'python', index_col = 0)
+df = df[['read_scr', 'str', 'avginc']]
+
+def f1(beta):
+    # y = a*x1 + b*x2 + c에서 x1,x2,y는 아니까 a,b,c를 구하는 것임!
+    # a = beta[0], b= beta[1], c=beta[2]
+    
+    cost_function = 0
+    for i in range(1,len(df)+1):
+        # 비용함수 공식
+        cost_function += (beta[0]*df.str[i]+beta[1]*df.avginc[i]+beta[2]-df.read_scr[i]) ** 2
+    return cost_function / (2*len(df))
+
+result=op.minimize(f1,(10,20,300))
+result.x
+
