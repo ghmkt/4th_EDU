@@ -14,10 +14,10 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict, Counter
 
-data = surprise.Dataset.load_builtin('ml-100k')
-df = pd.DataFrame(data.raw_ratings, columns = ['movieId', 'userId', 'rating', 'timestamp'])
+data = surprise.Dataset.load_builtin('ml-100k')			#surprise에서 영화 데이터를 가져옴
+df = pd.DataFrame(data.raw_ratings, columns = ['movieId', 'userId', 'rating', 'timestamp']) # 칼럼 이름을 지정
 
-cnt = Counter(df['userId'])
+# 여기서부터는 세션 하드코딩 파일에서 필요한 부분을 차용했음
 idx_sorted = sorted(list(cnt.keys()), key= lambda x: cnt[x], reverse = True)
 idx = np.zeros(len(df)) 
 for i in idx_sorted[:400]:
@@ -52,14 +52,14 @@ def find_neighbors(utility_matrix, k, sim_fun):
 
 neighbors = find_neighbors(utility_matrix, 10, cos_sim)
 
-def testing(test, neighbors, utility_matrix): # test data에 대해 test하는 함수
+def testing(test, neighbors, utility_matrix):
     predicted = []
-    movies = utility_matrix.columns # train data에 있는 영화 목록
-    for i in range(len(test)): # test set에 대해 반복을 돌립니다
-        movie = test.iloc[i,0]; user = test.iloc[i,1] # 각 row의 movie, user Id를 따옴
-        if (user not in neighbors) or (movie not in movies): # 만약 해당 user의 neighbor data가 없거나, movie가 train movie 목록에 없다면
-            predicted.append(None) # 그 데이터에 관해서는 test를 할 수 없음
-        else: predicted.append(prediction(user, movie, neighbors, utility_matrix)) # 아니라면 예측을 합니다
+    movies = utility_matrix.columns
+    for i in range(len(test)): 
+        movie = test.iloc[i,0]; user = test.iloc[i,1] 
+        if (user not in neighbors) or (movie not in movies):
+            predicted.append(None) 
+        else: predicted.append(prediction(user, movie, neighbors, utility_matrix))
     return predicted
 
 def prediction(user, movie, neighbors, utility_matrix):
@@ -73,19 +73,20 @@ def prediction(user, movie, neighbors, utility_matrix):
 
 test['prediction'] = testing(test, neighbors, utility_matrix)
 
-from surprise.model_selection import KFold
+#K-Fold
+from surprise.model_selection import KFold #Kfold 함수를 가져옴
 
-sim_options = {'name': 'cosine'}
+sim_options = {'name': 'cosine'} #코사인 유사도를 사용했음
 algo = surprise.KNNWithMeans(sim_options=sim_options)
 
-np.random.seed(0)
-acc = np.zeros(5)
+np.random.seed(0)  # 값이 섞이지 않게 고정
+acc = np.zeros(5)  #5개로 쪼갰으니 5개짜리 array를 생성
 cv = KFold(5)
-for i, (train, test) in enumerate(cv.split(data)):
+for i, (train, test) in enumerate(cv.split(data)): #학습 및 테스트
     algo.fit(train)
     predictions = algo.test(test)
-    acc[i] = surprise.accuracy.mae(predictions, verbose=True)
-acc.mean()
+    acc[i] = surprise.accuracy.mae(predictions, verbose=True) #mae값 도출
+acc.mean() #5개 mae값의 평균을 측정 >> 0.7544840783154994가 나왔음
 
 
 # SQL 1
