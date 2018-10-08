@@ -33,26 +33,43 @@ def return_Y(filename):
 
   
 # 3번 문제
-X,y = [],[]
-for i in range(len(training_file_list)): 
-# for i in range(9): 
-    filename = training_file_list[i]
-    myv = return_vector(filename)
-    myY = return_Y(filename)
-    X.append(myv)
-    y.append(myY)
+def getXYtraintest(filedir):
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    X,y = [],[]
+    for i in range(len(filedir)): 
+        filename = filedir[i]
+        myv = return_vector(filename)
+        myY = return_Y(filename)
+        X.append(myv)
+        y.append(myY)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    return X_train, X_test, y_train, y_test
+
+
+X_train, X_test, y_train, y_test = getXYtraintest(training_file_list)
+
 
 # 4번 문제
 total_accuracy=[]
-for k in range(1,11):
+for k in range(1,11): # i는 1~10
     knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(X_train, y_train)
     test_pred = knn.predict(X_test)
     accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
     total_accuracy.append(accuracy)
-
-plt.plot(total_accuracy)
+    
+x = [i for i in range(1,11)]
+plt.plot(x,total_accuracy)
 plt.show()
 
+# 5번 문제
+k=3
+test_file_list = listdir('testDigits')
+X_train, X_test, y_train, y_test = getXYtraintest(test_file_list)
+
+knn = KNeighborsClassifier(n_neighbors=k)
+knn.fit(X_train, y_train)
+test_pred = knn.predict(X_test)
+accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
+accuracy
