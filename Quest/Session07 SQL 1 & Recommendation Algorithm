@@ -6,9 +6,70 @@
 # 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
 # sklearn 모듈 내의 kfold 함수를 이용해 5-fold Cross Validation을 시행하고, Absolute Error의 평균을 최종적으로 출력해주세요.
 
+from collections import defaultdict
+import pandas as pd
+import numpy as np
+import surprise
+from collections import Counter
+from sklearn.model_selection import train_test_split
+import math
+
+data = surprise.Dataset.load_builtin('ml-100k')
+df = pd.DataFrame(data.raw_ratings, columns = ['user', 'item', 'rate', 'id'])
+
+cnt = Counter(df['user']) 
+idx_sorted = sorted(list(cnt.keys()), key=lambda x: cnt[x], reverse=True) 
+
+idx = np.zeros(len(df))
+
+for i in idx_sorted[:400]:
+    idx += (df['user'] == i) 
+
+idx = np.array(idx, dtype=bool)
+new_df = df[idx].iloc[:,:3]
+
+from sklearn.model_selection import train_test_split
+train_set, test_set = train_test_split(new_df, test_size=0.3, random_state=30) 
+
+utility_matrix = train_set.pivot(index='user', columns='item', values='rate').fillna(0) 
+
+def cos_sim(x, y):
+    return np.dot(x, y) / math.sqrt(np.dot(x, x) * np.dot(y, y))
+
+def find_neighbors(utility_matrix, k, sim_fun):  #몇 개의 neighbor을 구할 것인지
+    sim_dict = {}
+    cnt = 0
+    for i in utility_matrix.index: 
+        cnt += 1 
+        ranking = [(0,0)] * k 
+        for j in utility_matrix.index.drop(i): 
+            ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) 
+            ranking = sorted(ranking, key=lambda x: -x[1])[:k]  
+        sim_dict[i] = ranking 
+    return sim_dict
+
+neighbors = find_neighbors(utility_matrix, 5, cos_sim)
+
+print(neighbors)
+
+#이까지 k=5로 하여, 코사인 유사도를 기준으로 한 유사한 군집 5개씩 클러스터링 완료.
+
+#5-fold Cross Validation & MAE
+
+algo = surprise.KNNWithMeans(name = 'cosine', user_based = True) 
+surprise.evaluate(algo, data).get('list') #밑의 개별적 값들이 정리된 표 사라짐
+
+
 
 # SQL 1
 
 # QUEST 1. quest1 table 이용. 10,000원 이상이거나 재고액이 200,000이상인 제품들의 no, 가격, 재고수량, 재고액을 구해보세요. (열 이름 별칭 사용)
 
 # QUEST 2. sample2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+select name, year(current_timestamp)-year(birthday)+1 as age, birthday,
+case
+when datediff(date(birthday), '2000-01-01') >=0 then 'no'
+when datediff(date(birthday), '2000-01-01') <0 then 'yes'
+end adult
+from quest2; 
+
