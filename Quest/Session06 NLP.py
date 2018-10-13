@@ -139,6 +139,14 @@ for k, word_counts in enumerate(topic_word_counts):
          for word, count in word_counts.most_common(): 
              if count > 4: print ('    ',k, word, count) 
           
+
+'''        
+Topic1 : 국정원, 미국, 소송, 지원, 청와대, 김석환, 김백준
+Topic2 : 피고인, 판단합니다. 보겠습니다. 인정됩니다. 이팔성. 무죄. 유죄. 청탁. 진술. 관련자. 뇌물
+Topic3 : 대통령, 피고인, 공소사실, 공소장, 사건
+Topic4 : 다스, 비자금, 자금, 김재정, 증거, 특검        
+'''        
+        
 topic_names = ["법인, 기관",
                     "죄, 판결",
                     "공소, 소송",
