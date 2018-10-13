@@ -158,3 +158,62 @@ for document, topic_counts in zip(documents, document_topic_counts):
              if count > 0: 
                  print ('    ',topic_names[topic], count)
               
+# 2. Word2Vec 코드를 활용하여 본인이 원하는 텍스트 넣어 보기 => 텍스트 + 원하는 키워드 5개의 유사 단어 추출한 후 결과 첨부   
+
+import codecs
+from bs4 import BeautifulSoup
+from konlpy.tag import Okt
+from gensim.models import word2vec
+
+# 이명박 대통령 1심 재판 전문
+
+filedir = 'C:\\Users\\Yang\\Desktop\\mytext.txt'
+documents=[]
+f = open(filedir,'r')
+count=0
+end=100
+while count<end:
+    count+=1
+    line = f.readline()
+    if not line: continue
+        
+    documents.append(line)
+f.close()
+
+# 텍스트를 한 줄씩 처리하기 
+twitter = Okt()
+results = []
+lines = documents
+for line in lines:
+    # 형태소 분석하기 
+    # 단어의 기본형 사용
+    malist = twitter.pos(line, norm=True, stem=True)
+    r = []
+    for word in malist:
+        # 어미/조사/구두점 등은 대상에서 제외 
+        if not word[1] in ["Josa", "Eomi", "Punctuation"]:
+            r.append(word[0])
+    rl = (" ".join(r)).strip()
+    results.append(rl)
+    # print(rl)
+
+# 파일로 출력하기  
+txt_file = '판결문.txt'
+with open(txt_file, 'w', encoding='utf-8') as fp:
+    fp.write("\n".join(results))
+    
+# Word2Vec 모델 만들기 
+data = word2vec.LineSentence(txt_file)
+model = word2vec.Word2Vec(data, 
+    size=200, window=10, hs=1, min_count=2, sg=1)
+model.save("DAS.model")
+
+model = word2vec.Word2Vec.load("DAS.model")
+
+#model.most_similar("다스")     >>>> 자료,이학수,전략,승호
+#model.most_similar("뇌물죄")   >>>> 유죄,공소,무죄,면소
+#model.most_similar("유죄")     >>>> 무죄,죄,면소,세
+#model.most_similar("이명박")   >>>> 시작,활동,법관,이의,유서
+#model.most_similar("직권남용") >>>> 유출,재직,완료,준비,
+
+
