@@ -111,5 +111,15 @@ for train_index, test_index in cv.split(new_df):
 # SQL 1
 
 # QUEST 1. quest1 table 이용. 10,000원 이상이거나 재고액이 200,000이상인 제품들의 no, 가격, 재고수량, 재고액을 구해보세요. (열 이름 별칭 사용)
-
-# QUEST 2. sample2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+'''
+select no, price as 가격, quantity as 재고수량, price*quantity as 재고액 from quest1 
+where price>=10000 or price*quantity>=200000;
+'''
+# QUEST 2. quest2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+'''
+select name as 이름, year(current_timestamp())-year(birthday)+1 as 나이,
+case
+when year(current_timestamp())-year(birthday)+1 >=20 then 'yes'
+when year(current_timestamp())-year(birthday)+1 <  20 then 'no'
+end as '성인 여부' from quest2;
+'''
