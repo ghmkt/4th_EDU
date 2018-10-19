@@ -11,9 +11,16 @@ import numpy as np
 from collections import defaultdict, Counter
 import surprise
 
+
+
+# 데이터 읽어오기
+
 data = surprise.Dataset.load_builtin('ml-100k') # 내장된 영화평 data가 있음
 df = pd.DataFrame(data.raw_ratings, columns = ['userId', 'movieId', 'rating', 'id'])
 df=df[['movieId','userId','rating']]
+
+
+# Top 400 뽑아오기 > new_df
 
 cnt = Counter(df['userId']) # 각 userId가 몇 번 등장했는지 count한 뒤에
 idx_sorted = sorted(list(cnt.keys()), key=lambda x: -cnt[x]) # 빈도가 높은 순서대로 userId를 정렬
@@ -26,28 +33,9 @@ idx = np.array(idx, dtype=bool) # Boolean 타입으로 바꾸어 줌. -> Bool In
 new_df = df[idx].iloc[:,:3] # 위의 자료를 이용해 인덱싱을 한 뒤 새로운 df를 만드는데, 마지막 열(timestamp)은 날림
 del df # 기존 df는 지워줌. 메모리 절약을 위해 ~^*^~
 
-from sklearn.model_selection import KFold
-
-cv = KFold(n_splits=5, shuffle=True, random_state=0)
-# train,test index 구하기
-for train_index, test_index in cv.split(new_df):
-    '''
-    print("test index :", test_index)
-    print("." * 80 )        
-    print("train index:", train_index)
-    print("=" * 80 )
-    '''
-
-    train = new_df.iloc[train_index,:]
-    test  = new_df.iloc[test_index,:]
 
 
-    # del new_df; del idx # 메모리 절약...!
-
-    utility_matrix = train.pivot(index='userId', columns='movieId', values='rating').fillna(0) # utility matrix 형태로 바꾸어 줌
-    # 즉, 각 row의 정보가 각 user의 정보이고, 각 column의 정보가 각 movie에 대한 정보가 되도록
-    
-# utility_matrix.head() # 잘 바뀌었군요
+# 함수 정의하기 
 
 def cos_sim(x, y): # cosine 유사도를 return하는 함수를 define
     return np.dot(x, y) ** 2 / (np.dot(x, x) * np.dot(y, y))
@@ -60,12 +48,8 @@ def find_neighbors(utility_matrix, k, sim_fun): # 주어진 유사도를 기준�
             ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) # (j, simmilarity between i & j) append
             ranking = sorted(ranking, key=lambda x: -x[1])[:k] # 각 튜플의 뒤의 원소를 기준으로 내림차순한 뒤(유클리디언은 오름차순 해야됨), k개까지만 cut
         sim_dict[i] = ranking # 위에서 만든 리스트를 sim_dict의 key = i에 대해 append함
-    print('Complete!')
+    print('Find neighbor Complete!')
     return sim_dict
-    
-neighbors = find_neighbors(utility_matrix, 5, cos_sim) # 참 느림... cos_sim2나 eucli로 하면 더 느려집니다 ^*^;;
-
-# neighbors # 딕셔너리가 각 user들의 neighbor들을 잘 담고 있음!
 
 def prediction(user, movie, neighbors, utility_matrix): # 이제 neighbor들의 평균을 냄으로써 평점을 예측해봅시다
     my_neighbors = neighbors[user] # 지정된 user의 이웃들을 꺼낸 뒤
@@ -85,16 +69,44 @@ def testing(test, neighbors, utility_matrix): # test data에 대해 test하는 �
             predicted.append(None) # 그 데이터에 관해서는 test를 할 수 없음
         else: predicted.append(prediction(user, movie, neighbors, utility_matrix)) # 아니라면 예측을 합니다
     return predicted
+
+
+# Cross Validation 5번에 걸쳐서 각각 Absolute Error의 평균 구하기
+
+from sklearn.model_selection import KFold
+
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+# train,test index 구하기
+cnt=0
+for train_index, test_index in cv.split(new_df):
+    cnt+=1
+    train = new_df.iloc[train_index,:]
+    test  = new_df.iloc[test_index,:]
+
+
+    # del new_df; del idx # 메모리 절약...!
+
+    utility_matrix = train.pivot(index='userId', columns='movieId', values='rating').fillna(0) # utility matrix 형태로 바꾸어 줌
+    # 즉, 각 row의 정보가 각 user의 정보이고, 각 column의 정보가 각 movie에 대한 정보가 되도록
+
+    neighbors = find_neighbors(utility_matrix, 5, cos_sim) # 참 느림... cos_sim2나 eucli로 하면 더 느려집니다 ^*^;;
+
+    # neighbors # 딕셔너리가 각 user들의 neighbor들을 잘 담고 있음!
+
+
+    test['prediction'] = testing(test, neighbors, utility_matrix) # 위 함수를 활용한 예측 칼럼을 만듦
+    test['diff'] = test['rating'] - test['prediction'] # 실제와 예측 간의 차이를 담은 column을 만듦
+
+    print(str(cnt)+'번째 Cross Validation 결과 Absolute Error의 평균: ',test['diff'].apply(abs).mean())
     
-test['prediction'] = testing(test, neighbors, utility_matrix) # 위 함수를 활용한 예측 칼럼을 만듦
-
-test['diff'] = test['rating'] - test['prediction'] # 실제와 예측 간의 차이를 담은 column을 만듦
-
-test['diff'].mean() # 예측의 차이가 평균적으로 -0.15만큼 차이가 남!
-
-test['diff'].apply(abs).mean()
-
-
+# 결과!    
+'''
+1번째 Cross Validation 결과 Absolute Error의 평균:  0.8737006237006264
+2번째 Cross Validation 결과 Absolute Error의 평균:  0.8896024464831847
+3번째 Cross Validation 결과 Absolute Error의 평균:  0.8781917194696841
+4번째 Cross Validation 결과 Absolute Error의 평균:  0.8669554107576374
+5번째 Cross Validation 결과 Absolute Error의 평균:  0.8753335879806482
+'''
 
 # SQL 1
 
