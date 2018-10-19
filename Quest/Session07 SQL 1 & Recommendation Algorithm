@@ -6,8 +6,6 @@
 # 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
 # sklearn 모듈 내의 kfold 함수를 이용해 5-fold Cross Validation을 시행하고, Absolute Error의 평균을 최종적으로 출력해주세요.
 
-# 1. Surprise 내장 영화 데이터(ml-100k)를 로드하여 “UBCF hardcoding.ipynb” 내의 코드를 따라 UBCF를 해주세요.
-
 import pandas as pd
 import numpy as np
 from collections import defaultdict, Counter
@@ -16,59 +14,58 @@ import surprise
 data = surprise.Dataset.load_builtin('ml-100k') # 내장된 영화평 data가 있음
 df = pd.DataFrame(data.raw_ratings, columns = ['userId', 'movieId', 'rating', 'id'])
 df=df[['movieId','userId','rating']]
-# df.head() # 아까 썼던 거랑 같은 양식!
 
 cnt = Counter(df['userId']) # 각 userId가 몇 번 등장했는지 count한 뒤에
 idx_sorted = sorted(list(cnt.keys()), key=lambda x: -cnt[x]) # 빈도가 높은 순서대로 userId를 정렬
 
 idx = np.zeros(len(df)) # df의 전체 row 길이에 해당하는 vector를 만든 뒤에
-for i in idx_sorted[:400]:
+for i in idx_sorted[:400]: # 400등으로 할지 더 할지는 내가 선택하기!
     idx += (df['userId'] == i) # 빈도 400등까지의 userId에 해당하는 row에 1씩을 더해준 뒤,
 idx = np.array(idx, dtype=bool) # Boolean 타입으로 바꾸어 줌. -> Bool Indexing을 위한 밑작업
 
 new_df = df[idx].iloc[:,:3] # 위의 자료를 이용해 인덱싱을 한 뒤 새로운 df를 만드는데, 마지막 열(timestamp)은 날림
 del df # 기존 df는 지워줌. 메모리 절약을 위해 ~^*^~
 
-from sklearn.model_selection import train_test_split
-train, test = train_test_split(new_df, test_size=0.3, random_state=42) # 3:7 비율로 test-train split
-del new_df; del idx # 메모리 절약...!
+from sklearn.model_selection import KFold
 
-utility_matrix = train.pivot(index='userId', columns='movieId', values='rating').fillna(0) # utility matrix 형태로 바꾸어 줌
-# 즉, 각 row의 정보가 각 user의 정보이고, 각 column의 정보가 각 movie에 대한 정보가 되도록
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+# train,test index 구하기
+for train_index, test_index in cv.split(new_df):
+    '''
+    print("test index :", test_index)
+    print("." * 80 )        
+    print("train index:", train_index)
+    print("=" * 80 )
+    '''
+
+    train = new_df.iloc[train_index,:]
+    test  = new_df.iloc[test_index,:]
+
+
+    # del new_df; del idx # 메모리 절약...!
+
+    utility_matrix = train.pivot(index='userId', columns='movieId', values='rating').fillna(0) # utility matrix 형태로 바꾸어 줌
+    # 즉, 각 row의 정보가 각 user의 정보이고, 각 column의 정보가 각 movie에 대한 정보가 되도록
+    
+# utility_matrix.head() # 잘 바뀌었군요
 
 def cos_sim(x, y): # cosine 유사도를 return하는 함수를 define
     return np.dot(x, y) ** 2 / (np.dot(x, x) * np.dot(y, y))
-    
-def cos_sim2(x, y, more_than = 5): # 이것은 겹치는 게 5개 이상인 vector 간에 겹치는 column에 한해 cosine 유사도를 반환하는 함수
-    idx = (x>0) & (y>0) # 겹치는 부분만 True이고 나머지는 False인 인덱스 벡터를 만듦
-    if sum(idx) < more_than: return 0 # minimum 기준을 충족시키지 못하면 유사도가 없는 것으로 반환
-    x_n = x[idx]
-    y_n = y[idx]
-    return np.dot(x_n, y_n) ** 2 / (np.dot(x_n, x_n) * np.dot(y_n, y_n))
-    
-from scipy.spatial import distance # Euclidean 거리를 구해주는 모듈
 
-def eucli_sim(x, y, more_than = 5): # 이것은 겹치는 게 5개 이상인 vector 간에 겹치는 column 한정 유클리디언 거리를 반환하는 함수
-    idx = (x>0) & (y>0)
-    if sum(idx) < more_than: return 100 # 얘는 소소익선이므로, 겹치는 부분이 적으면 크게 반환해주어야 함
-    x_n = x[idx]
-    y_n = y[idx]
-    return distance.euclidean(x_n,y_n)/np.sqrt(len(x_n)) # sqrt(n)으로 나누어주어야 보정이 됨
-    
 def find_neighbors(utility_matrix, k, sim_fun): # 주어진 유사도를 기준으로 k개의 neighbor를 구해보자!
     sim_dict = {} # 각 user들의 이웃들을 내포한 딕셔너리로 만들 것임!
-    cnt = 0 # 밑에서 반복문 몇 번 돌았는지 확인하려고...
     for i in utility_matrix.index: # utility_matrix의 index들 = userId들
-        cnt += 1 # 반복 1회당 카운트 한 번씩 올려주고
         ranking = [(0,0)] * k
         for j in utility_matrix.index.drop(i): # i를 제외한 나머지 userId에 대해 반복
             ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) # (j, simmilarity between i & j) append
             ranking = sorted(ranking, key=lambda x: -x[1])[:k] # 각 튜플의 뒤의 원소를 기준으로 내림차순한 뒤(유클리디언은 오름차순 해야됨), k개까지만 cut
         sim_dict[i] = ranking # 위에서 만든 리스트를 sim_dict의 key = i에 대해 append함
-        if not cnt%10: print(cnt) # 10단위로 카운트 수를 출력... 얼마나 진행되고 있는지 시각적으로 확인코자 하는 수단
+    print('Complete!')
     return sim_dict
     
-neighbors = find_neighbors(utility_matrix, 10, cos_sim) # 참 느림... cos_sim2나 eucli로 하면 더 느려집니다 ^*^;;
+neighbors = find_neighbors(utility_matrix, 5, cos_sim) # 참 느림... cos_sim2나 eucli로 하면 더 느려집니다 ^*^;;
+
+# neighbors # 딕셔너리가 각 user들의 neighbor들을 잘 담고 있음!
 
 def prediction(user, movie, neighbors, utility_matrix): # 이제 neighbor들의 평균을 냄으로써 평점을 예측해봅시다
     my_neighbors = neighbors[user] # 지정된 user의 이웃들을 꺼낸 뒤
@@ -78,7 +75,7 @@ def prediction(user, movie, neighbors, utility_matrix): # 이제 neighbor들의 
         if r > 0: rates.append(r) # 정보가 있을 경우에 리스트에 append
     if rates == []: return None # 만약 리스트가 비어있다면, None을 반환 (왜냐면, 이웃 중에 그 영화를 본 사람이 없는 것이므로)
     else: return sum(rates)/len(rates) # 아니라면 평균을 return합시다
-    
+
 def testing(test, neighbors, utility_matrix): # test data에 대해 test하는 함수
     predicted = []
     movies = utility_matrix.columns # train data에 있는 영화 목록
@@ -95,33 +92,8 @@ test['diff'] = test['rating'] - test['prediction'] # 실제와 예측 간의 차
 
 test['diff'].mean() # 예측의 차이가 평균적으로 -0.15만큼 차이가 남!
 
-np.sqrt((test['diff'] ** 2).mean()) # rmse는 대략 0.96
+test['diff'].apply(abs).mean()
 
-neighbors = find_neighbors(utility_matrix, 10, cos_sim2) # cos_sim2로 테스팅 - %% 속도 느림 주의 %%
-test['prediction2'] = testing(test, neighbors, utility_matrix)
-test['diff2'] = test['rating'] - test['prediction2']
-print(test['diff2'].mean(), np.sqrt((test['diff2'] ** 2).mean())) # 설명력이 악화됨
-
-# 마지막으로 euclidean 거리로 테스팅 - %% 속도 매우 느림 주의 %%
-def find_neighbors2(utility_matrix, k, sim_fun):
-    sim_dict = {}
-    cnt = 0
-    for i in utility_matrix.index:
-        cnt += 1
-        ranking = [(0,100)] * k # 유클리디언 거리는 소소익선이므로, default 거리를 100으로해서 밀려날 수 있도록 해줌
-        for j in utility_matrix.index.drop(i):
-            ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j])))
-            ranking = sorted(ranking, key=lambda x: x[1])[:k] # 유클리디언 거리는 오름차순으로 정렬해줘야 가까운 순서임
-        sim_dict[i] = ranking
-        if not cnt%10: print(cnt)
-    return sim_dict
-
-neighbors = find_neighbors2(utility_matrix, 10, eucli_sim)
-test['prediction3'] = testing(test, neighbors, utility_matrix)
-test['diff3'] = test['rating'] - test['prediction3']
-print(test['diff3'].mean(), np.sqrt((test['diff3'] ** 2).mean())) # 평균 기준으론 개선되었으나 rmse 기준으로는 동일
-
-print(test['diff'].apply(abs).mean(), test['diff2'].apply(abs).mean(), test['diff3'].apply(abs).mean())
 
 
 # SQL 1
