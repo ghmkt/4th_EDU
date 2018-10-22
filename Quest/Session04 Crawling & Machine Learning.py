@@ -7,6 +7,66 @@
 # 최신 5페이지에 걸쳐 100개의 제목과 기사를 가져올 수 있는 코드를 작성해주세요.
 
 
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+from selenium import webdriver
+import re
+import time
+import pandas as pd
+
+
+path = '/Users/daham/downloads/chromedriver'
+
+driver = webdriver.Chrome(path)
+
+original_url = "https://news.naver.com/main/list.nhn?mode=LS2D&mid=sh m&sid2=269&sid1=100"
+driver.get(original_url)
+
+time.sleep(2)
+url = driver.current_url
+html = urlopen(url)
+soup = BeautifulSoup(html,"lxml",from_encoding='utf-8')
+
+url_list = []
+
+txt = soup.div(class_='paging')
+get_max_page_num = max(re.findall('\>([\d])', str(txt)))
+
+for i in range(1, int(get_max_page_num)+1):
+    url = driver.current_url
+    html = urlopen(url)
+    soup = BeautifulSoup(html,"lxml",from_encoding='utf-8')
+    articles = soup.find_all("dt")
+    
+    for link in articles:
+        url_list.append(link.find("a")["href"])
+    
+    current_page = re.findall('strong\>([\d])', str(txt))[0]
+    if str(i) == current_page:
+        pass
+    else:
+        driver.find_element_by_link_text(str(i)).click()
+    
+url_list2 = list(set(map(lambda x : x.replace(' ', ''), url_list)))
+
+result_df = pd.DataFrame(columns=['기사 제목', '내용'])
+
+hangul = re.compile('[^ ㄱ-ㅣ가-힣|0-9.'']+')
+for i in range(len(url_list2)):
+    html = urlopen(url_list2[i])
+    soup = BeautifulSoup(html,"html.parser",from_encoding='utf-8')
+    content = soup.find("div",{"id":"articleBodyContents"})
+    title = soup.find("h3",{"id":"articleTitle"}).find(text=True)
+    result = hangul.sub('',str(content))
+    result = re.sub('본문 내용  플레이어   플레이어    오류를 우회하기 위한 함수 추가','',result)
+    result = re.sub('본문 내용  플레이어   동영상 뉴스       영상 플레이어   플레이어    오류를 우회하기 위한 함수 추가','',result)
+    
+    result_df.loc[i, '기사 제목'] = title
+    result_df.loc[i, '내용'] = result
+
+print(result_df)
+
+
 # Machine Learning Quest는 아래 1, 2 중 택1입니다.
 
 # Machine Learning Quest 1
