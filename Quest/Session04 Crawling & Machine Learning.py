@@ -6,6 +6,7 @@
 # 위의 주소는 네이버 정치 일반 기사 페이지의 주소입니다. 한 페이지에는 20개의 기사가 있습니다. 
 # 최신 5페이지에 걸쳐 100개의 제목과 기사를 가져올 수 있는 코드를 작성해주세요.
 
+
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from selenium import webdriver
