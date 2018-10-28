@@ -10,5 +10,7 @@
 # SQL 1
 
 # QUEST 1. quest1 table 이용. 10,000원 이상이거나 재고액이 200,000이상인 제품들의 no, 가격, 재고수량, 재고액을 구해보세요. (열 이름 별칭 사용)
+SELECT *, quantity*price AS stock_price FROM quest1 WHERE price > 10000 OR quantity*price > 200000;
 
 # QUEST 2. sample2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+SELECT name,YEAR(CURRENT_TIMESTAMP())-YEAR(birthday)+1 AS age, birthday, CASE WHEN YEAR(birthday) < 2000 THEN 'yes' ELSE 'no' END AS "adult" FROM quest2;
