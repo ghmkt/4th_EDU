@@ -1,0 +1,78 @@
+# Quest 제출 시 제목을 'Session04 이름'으로 해주세요. ex. Session04 이재경
+
+
+# Crawling Quest
+# http://news.naver.com/main/list.nhn?mode=LS2D&mid=shm&sid1=100&sid2=269
+# 위의 주소는 네이버 정치 일반 기사 페이지의 주소입니다. 한 페이지에는 20개의 기사가 있습니다. 
+# 최신 5페이지에 걸쳐 100개의 제목과 기사를 가져올 수 있는 코드를 작성해주세요.
+
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+import re
+
+#articles 안에 각 페이지별 url에서 개별 기사로 넘어가는 부분을 가져오는 코드입니다
+articles = []
+for i in range(1,6): #1부터 5페이지까지만 필요
+    url = "https://news.naver.com/main/list.nhn?mode=LS2D&sid2=269&sid1=100&mid=shm&date=20181029&page=" + str(i)
+    html = urlopen(url)
+    soup = BeautifulSoup(html,"lxml",from_encoding='utf-8')
+    articles.extend(soup.findAll("dt"))
+
+#가져온 <dt> 태그에서 기사 링크만을 추출합니다
+url_list = []
+for link in articles:
+        url_list.append(link.find("a")["href"])
+        url_list2 = list(set(url_list))
+      
+#가져온 url이 100개가 맞는지 확인        
+len(url_list2)
+
+
+#판다스를 이용해 데이터프레임 형식에 저장합니다
+import pandas as pd
+from pandas import DataFrame
+import numpy as np
+
+df = DataFrame(columns = ['기사 제목', '내용'])
+
+
+for i in range(len(url_list2)):
+    html = urlopen(url_list2[i])
+    content = soup.find("div",{"id":"articleBodyContents"})
+    title = soup.find("h3",{"id":"articleTitle"}).find(text=True)
+    result = hangul.sub('',str(content))
+    result = re.sub('본문 내용  플레이어   플레이어    오류를 우회하기 위한 함수 추가','',result)
+    result = re.sub('본문 내용  플레이어   동영상 뉴스       영상 플레이어   플레이어    오류를 우회하기 위한 함수 추가','',result)
+    df.loc[i, '기사 제목'] = title
+    df.loc[i, '내용'] = result
+
+len(df) #100개 맞음!
+df
+
+# Machine Learning Quest는 아래 1, 2 중 택1입니다.
+
+# Machine Learning Quest 1
+# 'caschool.csv' 데이터에서 str과 avginc변수를 통해 read_scr을 예측할 수 있는 y=a*x1+b*x2+c 모형으로 Cost function을 minimize해보세요.
+
+from scipy import optimize as op
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv("caschool.csv")
+df.head()
+
+#비용함수 정의
+def cost_function(beta): 
+    hx = beta[0]*X1 + beta[1]*X2 + beta[2]
+    jx = sum((hx-Y)**2)
+    return 1/(2*m)*jx     #통상 수치의 간편화를 위해 1/2m을 곱해준다고 알고 있음
+
+#변수 정의
+X1 = df["str"]
+X2 = df["avginc"]
+Y =  df["read_scr"]
+m = len(df)
+
+result = op.minimize(cost_function, (2,10,5))
+
+result #beta(i) = (-0.95005574,   1.88411344, 644.77178806) 이 비용함수의 최저점이라고 함
