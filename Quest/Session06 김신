@@ -1,0 +1,190 @@
+# 제출시 파일명은 Session06 이름 으로 해주세요.
+
+# 1. LDA 코드를 활용하여 본인이 원하는 텍스트를 넣어 보기 => 텍스트 원본 파일 + LDA 결과 첨부 + 본인 결과 해석
+# 2. Word2Vec 코드를 활용하여 본인이 원하는 텍스트 넣어 보기 => 텍스트 + 원하는 키워드 5개의 유사 단어 추출한 후 결과 첨부   
+
+#LDA
+
+import nltk
+import konlpy
+from konlpy.tag import Kkma;kkma = Kkma()
+from konlpy.corpus import kobill
+
+file = open(r"C:\Users\shin\Desktop\baseball.txt","r")
+text = file.read()
+
+documents = []
+from konlpy.tag import Kkma
+kkma = Kkma()
+documents.append(kkma.morphs(text))
+
+import random
+from collections import Counter
+
+#조건부 확률 분포 정의를 위한 준비
+
+#topic의 개수
+K = 2
+
+#1. 각 토픽이 각 문서에 할당되는 횟수
+#counter로 구성된 list
+#각각의 counter는 각 문서를 의미함
+document_topic_counts = [Counter() for _ in documents]
+print(len(document_topic_counts))
+
+#2. 각 단어가 각 토픽에 할당되는 횟수
+# 각각의 counter는 각 토픽을 의미함
+topic_word_counts = [Counter() for _ in range(K)] 
+
+#3. 각 토픽에 할당되는 총 단어 수
+# 각각의 숫자는 각 토픽을 의미함
+topic_counts = [0 for _ in range(K)] 
+
+#4. 각 문서에 포함되는 총 단어의 수
+# 각각의 숫자는 각 문서를 의미함
+document_lengths = [len(d) for d in documents]
+
+#5. 단어 종류의 수
+distinct_words = set(word for document in documents for word in document) 
+W = len(distinct_words)
+
+#6. 총 문서의 수
+D = len(documents)
+
+def p_topic_given_document(topic, d, alpha=0.1):
+    # 문서 d의 모든 단어 가운데 topic에 속하는
+    # 단어의 비율 (alpha를 더해 smoothing)
+    return ((document_topic_counts[d][topic] + alpha) /
+            (document_lengths[d] + K * alpha))
+
+def p_word_given_topic(word, topic, beta=0.1):
+    # topic에 속한 단어 가운데 word의 비율
+    # (beta를 더해 smoothing)
+    return ((topic_word_counts[topic][word] + beta) /
+            (topic_counts[topic] + W * beta))
+
+def topic_weight(d, word, k):
+    # 문서와 문서의 단어가 주어지면
+    # k번째 토픽의 weight를 반환
+    return p_word_given_topic(word, k) * p_topic_given_document(k, d)
+  
+  def choose_new_topic(d, word):
+    return sample_from([topic_weight(d, word, k) for k in range(K)])
+
+#랜덤으로 생성된 weight로부터 인덱스를 생성함
+def sample_from(weights):
+     total = sum(weights)
+     rnd = total * random.random()       # uniform between 0 and total
+     for i, w in enumerate(weights):
+         rnd -= w                        # return the smallest i such that
+         if rnd <= 0: return i           # sum(weights[:(i+1)]) >= rnd
+          
+random.seed(0)
+
+#topic의 개수
+K = 2
+
+# 각 단어를 임의의 토픽에 배정
+document_topics = [[random.randrange(K) for word in document]
+                   for document in documents]
+
+# 랜덤 초기화한 상태에서 AB를 구하는 데 필요한 숫자 계산하기
+for d in range(D):
+    for word, topic in zip(documents[d], document_topics[d]):
+        document_topic_counts[d][topic] += 1
+        topic_word_counts[topic][word] += 1
+        topic_counts[topic] += 1
+        
+ 
+random.seed(0)
+
+#topic의 개수
+K = 2
+
+# 각 단어를 임의의 토픽에 배정
+document_topics = [[random.randrange(K) for word in document]
+                   for document in documents]
+
+# 랜덤 초기화한 상태에서 AB를 구하는 데 필요한 숫자 계산하기
+for d in range(D):
+    for word, topic in zip(documents[d], document_topics[d]):
+        document_topic_counts[d][topic] += 1
+        topic_word_counts[topic][word] += 1
+        topic_counts[topic] += 1
+for iter in range(1000): 
+    for d in range(D): 
+        for i, (word, topic) in enumerate(zip(documents[d], 
+                                              document_topics[d])): 
+ 
+ 
+           # remove this word / topic from the counts
+           # so that it doesn't influence the weights 
+            document_topic_counts[d][topic] -= 1 
+            topic_word_counts[topic][word] -= 1 
+            topic_counts[topic] -= 1 
+            document_lengths[d] -= 1 
+ 
+           # choose a new topic based on the weights 
+            new_topic = choose_new_topic(d, word) 
+            document_topics[d][i] = new_topic 
+
+ 
+           # and now add it back to the counts 
+            document_topic_counts[d][new_topic] += 1 
+            topic_word_counts[new_topic][word] += 1 
+            topic_counts[new_topic] += 1 
+            document_lengths[d] += 1
+          
+ #각 토픽에 가장 영향력이 높은 (weight)값이 큰 단어 탐색
+for k, word_counts in enumerate(topic_word_counts): 
+         for word, count in word_counts.most_common():
+      
+topic_names = ["류현진", "오타니"]
+
+for document, topic_counts in zip(documents, document_topic_counts): 
+         print (document) 
+         for topic, count in topic_counts.most_common(): 
+             if count > 0: 
+                 print (topic_names[topic], count)
+             if count > 0: print (k, word, count)
+              
+#Word2Vec
+
+from gensim.models.word2vec import Word2Vec
+model = Word2Vec(documents,size=100, window=10, min_count=2, sg=1)
+model.init_sims(replace=True)
+
+print(model.similarity('현진', '트라웃')) #오타니 기사에만 나오고, 류현진 기사에는 안나오는 키워드 두 개의 유사도를 측정
+print(model.similarity('다저스', '현진')) #류현진의 소속팀 다저스와의 유사도(류현진의 이름도 '류'와 '현진'으로 분리되었네요...)
+print(model.similarity('체인지업', '현진')) #류현진의 주 구종 체인지업과의 유사도
+
+model.most_similar("현진")
+
+#결과
+[('포인트', 0.9995400905609131),
+ ('없', 0.9995048642158508),
+ ('오른쪽', 0.9995031356811523),
+ ('게', 0.9994999170303345),
+ ('두', 0.9994980692863464),
+ ('시절', 0.9994968175888062),
+ ('체인지업', 0.999485433101654),
+ ('변화', 0.9994842410087585),
+ ('타자', 0.9994691014289856),
+ ('의', 0.9994678497314453)]  >>> 체인지업, 변화, 타자, 포인트(릴리스 포인트가 끊어져서 포인트만 출력된 듯) 등 유의미한 단어들을 추출
+
+model.most_similar('체인지업')
+
+#결과
+[('과', 0.9995377063751221),
+ ('투수', 0.9995211362838745),
+ (')', 0.9995185732841492),
+ ('일주일', 0.9995050430297852),
+ ('로', 0.999492883682251),
+ ('라는', 0.9994825124740601),
+ ('구속', 0.9994823932647705),
+ ('일치', 0.9994744062423706),
+ ('이상', 0.9994709491729736),
+ ('타자', 0.9994677305221558)] >>> 타자, 구속, 투수 등 유사한 단어도 나온다
+
+# 한글 텍스트의 경우 형태소 단위로 분절하면 유사도 측정에서 조사, 어미가 너무 많이 포함되는데, Word2Vec의 파라미터를 조절하니 어느 정도 유의미한 단어들을 뽑아낼 수 있는 것 같습니다.
+# 파라
