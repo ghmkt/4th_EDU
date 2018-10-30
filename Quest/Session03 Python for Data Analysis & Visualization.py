@@ -8,3 +8,19 @@
 # 2
 # ‘province data.csv’로부터 지역별로 전 기간에 걸친 평균 gdp와 unemploymen를 구한 뒤, 이를 산포도로 표현하세요.
 # 단, 평균 성비가 110 이상인 지역의 산포도는 파란색 X 모양의 점, 110 미만인 지역의 산포도는 빨간색 세모 모양의 점으로 표현하세요.
+from matplotlib import pyplot as plt
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv('province data.csv', engine='python', index_col=0)
+df.head()
+mean = df.groupby(['id']).mean()
+
+mean1 = mean[mean['sexratio'] < 110]
+mean2 = mean[mean['sexratio'] >= 110]
+
+plt.scatter(mean1['gdp'], mean1['unemployment'], color = 'red', marker = '^')
+plt.scatter(mean2['gdp'], mean2['unemployment'], color = 'blue', marker = 'x')
+plt.xlabel('gdp')
+plt.ylabel('unemployment')
+plt.show()
