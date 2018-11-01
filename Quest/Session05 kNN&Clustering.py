@@ -1,6 +1,16 @@
 # 제출 시 제목은 Session05 이름으로 해주세요!
 # kNN&Clustering의 퀘스트 코드를 아래에 기입해주세요.
 
+import numpy as np
+from os import listdir
+import matplotlib.pyplot as plt
+import sklearn
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+training_file_list = listdir('trainingDigits')
+test_file_list = listdir('testDigits')
+
 # 1. 파일명을 인자로 받아서 (1, 1024) 백터를 반환하는 함수를 정의하세요.
 # 2. 파일명을 인자로 받아서 Y값을 반환하는 함수를 정의하세요.
 
