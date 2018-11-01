@@ -81,7 +81,7 @@ test['prediction'] = testing(test, neighbors, utility_matrix) # 위 함수를 �
 test['diff'] = test['rate'] - test['prediction'] # 실제와 예측 간의 차이(=error)를 담은 column을 만듦
 print(test['diff'].apply(abs).mean())
 
-## -> 최종 absolute error는 1.134149444475531가 나옵니다.
+## -> 최종 absolute error의 평균 1.134149444475531가 나옵니다.
 
 # SQL 1
 
