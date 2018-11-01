@@ -51,22 +51,9 @@ for k in range(1,11):
 plt.plot(accuracyset)
 plt.show()
 
-# 저 그래프를 어떻게 읽어야 할지 잘 모르겠어서 k별로 정확도를 측정했음.
-for k in range(1,11):
-    knn = KNeighborsClassifier(n_neighbors=k)
-    knn.fit(X_train, y_train)
-    test_pred = knn.predict(X_test)
-    accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
-    print(k, ":", accuracy)
-    
-#결과
-#1 : 0.9690189328743546
-2 : 0.9518072289156626
-3 : 0.9690189328743546
-4 : 0.9655765920826161
-5 : 0.9604130808950087
-6 : 0.9586919104991394
-7 : 0.9586919104991394
-8 : 0.9604130808950087
-9 : 0.9621342512908778
-10 : 0.9569707401032702
+# accuracyset의 3번째 값, 즉 k=3일때가 가장 클 것임(그래프상에선 x = 2에 해당하는 지점).
+knn = KNeighborsClassifier(n_neighbors=k)
+knn.fit(X_train, y_train)
+test_pred = knn.predict(X_test)
+accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
+print(k, ":", accuracy)
