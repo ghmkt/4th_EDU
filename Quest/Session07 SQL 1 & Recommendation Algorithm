@@ -6,8 +6,83 @@
 # 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
 # sklearn 모듈 내의 kfold 함수를 이용해 5-fold Cross Validation을 시행하고, Absolute Error의 평균을 최종적으로 출력해주세요.
 
+import pandas as pd
+import numpy as np
+import surprise
+from collections import defaultdict, Counter
+
+data = surprise.Dataset.load_builtin('ml-100k')
+df = pd.DataFrame(data.raw_ratings, columns = ['user', 'item', 'rate', 'id'])
+df.head()
+
+cnt = Counter(df['user'])
+idx_sorted = sorted(list(cnt.keys()), key=lambda x: -cnt[x])
+idx = np.zeros(len(df))
+for i in idx_sorted[:400]:
+    idx += (df['user'] == i) 
+idx = np.array(idx, dtype=bool)
+
+new_df = df[idx].iloc[:,:3] 
+del df 
+arr = np.array(new_df)
+
+#5-fold Cross Validation
+from sklearn.model_selection import KFold
+kf = KFold(n_splits=5)
+for train, test in kf.split(arr):
+    print(train, test)
+train = pd.DataFrame.from_records(arr[train], columns=['user','item','rate'])
+test = pd.DataFrame.from_records(arr[test], columns=['user','item','rate'])
+
+utility_matrix = train.pivot(index='user', columns='item', values='rate').fillna(0)
+
+def cos_sim(x, y): 
+    return np.dot(x, y) ** 2 / (np.dot(x, x) * np.dot(y, y))
+    
+def find_neighbors(utility_matrix, k, sim_fun):
+    sim_dict = {} 
+    cnt = 0 
+    for i in utility_matrix.index: 
+        cnt += 1
+        ranking = [(0,0)] * k
+        for j in utility_matrix.index.drop(i): 
+            ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) 
+            ranking = sorted(ranking, key=lambda x: -x[1])[:k] 
+        sim_dict[i] = ranking 
+        if not cnt%10: print(cnt) 
+    return sim_dict
+
+# k=10으로 코사인 유사도 계산
+neighbors = find_neighbors(utility_matrix, 10, cos_sim) 
+
+def prediction(user, movie, neighbors, utility_matrix):
+    my_neighbors = neighbors[user] 
+    rates = []
+    for i, _ in my_neighbors:
+        r = utility_matrix.loc[i, movie] 
+        if r > 0: rates.append(r)
+    if rates == []: return None 
+    else: return sum(rates)/len(rates) 
+    
+def testing(test, neighbors, utility_matrix): 
+    predicted = []
+    movies = utility_matrix.columns 
+    for i in range(len(test)): 
+        movie = test.iloc[i,1]; user = test.iloc[i,0]
+        if (user not in neighbors) or (movie not in movies):
+            predicted.append(None) 
+        else: predicted.append(prediction(user, movie, neighbors, utility_matrix))
+    return predicted
+    
+test['prediction'] = testing(test, neighbors, utility_matrix) 
+test['diff'] = test['rate'] - test['prediction']
+
+np.sqrt((test['diff'] ** 2).mean()) # Absolute Error의 평균
+
 
 # SQL 1
+
+SQL2 퀘스트와 같이 제출하겠습니다
 
 # QUEST 1. quest1 table 이용. 10,000원 이상이거나 재고액이 200,000이상인 제품들의 no, 가격, 재고수량, 재고액을 구해보세요. (열 이름 별칭 사용)
 
