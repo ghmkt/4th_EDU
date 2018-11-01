@@ -1,0 +1,65 @@
+# 제출 시 파일명은 Session12 이름 으로 해주세요.
+
+# 1. 실습 코드를 활용하여 [scikit-learn의 기본 데이터 breast_cancer]에서 RandomForest를 활용해 양성, 악성을 예측 => 코드 + confusion matrix 캡쳐본 첨부
+# 2. 실습 코드를 활용하여 [scikit-learn의 기본 데이터 breast_cancer]에서 Boosting을 활용해 양성, 악성을 예측 => 코드 + confusion matrix 캡쳐본 첨부
+
+#1. 필요한 모듈과 데이터셋 불러오기
+import numpy as np
+import pandas as pd
+import seaborn as sns
+!pip3 install xgboost
+import xgboost
+%matplotlib inline
+
+from sklearn.datasets import load_breast_cancer
+
+#2. 데이터셋을 training set, test set으로 나누기
+
+from sklearn.model_selection import train_test_split
+
+cancer = load_breast_cancer()
+X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target, stratify = cancer.target, random_state = 42)
+
+#3. RandomForestClassifierf를 이용한 정확도 예측과 시각화
+# sklearn에서 RandomForestClassifier 함수 불러오기
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(n_estimators=100, oob_score=True, random_state=123456)
+# n_estimators : 생성할 트리의 개수
+# oob_score : out-of-bag score, 예측이 얼마나 정확한가에 대한 추정을 수치로 나타낸 것
+
+rf.fit(X_train, y_train)
+# rf.fit(features, targets)
+
+# sklearn에서 accuracy_score 함수 불러오기
+from sklearn.metrics import accuracy_score
+
+predicted = rf.predict(X_test) # rf 모델에 X_test를 넣고 그 예측값을 predicted에 저장
+accuracy = accuracy_score(y_test, predicted) # 실제 데이터와 예측값이 일치하는 비율
+
+print(f'Out-of-bag score estimate: {rf.oob_score_:.3}')
+print(f'Mean accuracy score: {accuracy:.3}')
+
+# sklearn에서 confusion_matrix 함수 불러오기
+from sklearn.metrics import confusion_matrix
+
+cm = pd.DataFrame(confusion_matrix(y_test, predicted), columns=cancer.target_names, index=cancer.target_names)
+# confusion_matrix는 라벨이 있는 경우 분류 모델을 평가하는 방법
+# column은 predicted, row는 y_test
+sns.heatmap(cm, annot=True) # sns 라이브러리에 있는 heatmap으로 cm을 시각화
+
+# 4. XGBClassifier를 이용한 예측과 시각화
+xgb = xgboost.XGBClassifier(n_estimators=100, max_depth=2)
+xgb.fit(X_train, y_train)
+
+predicted_xgb = xgb.predict(X_test) # xgb 모델에 X_test를 넣고 그 예측값을 predicted에 저장
+accuracy_xgb = accuracy_score(y_test, predicted_xgb) # 실제 데이터와 예측값이 일치하는 비율
+
+print(f'Mean accuracy score: {accuracy_xgb:.3}')
+
+cm_xgb = pd.DataFrame(confusion_matrix(y_test, predicted_xgb), columns=iris.target_names, index=iris.target_names)
+sns.heatmap(cm_xgb, annot=True) # sns 라이브러리에 있는 heatmap으로 cm_xgb를 시각화
+
+# 예제와 같이 랜덤포레스트보다 XG부스트의 예측도가 높았습니다. 그러나 max_depth나 n_estimator를 조금씩 조정해 보면
+# 결과값이 달라질 수도 있음을 알게 되었습니다. 랜덤 포레스트 모델이 비교적 안정적이고, 부스팅 모델이 효율적이라고 하는데,
+# 지금 사용한 cancer 데이터셋은 크기가 작아 양 모델의 속도 차이는 느낄 수 없었습니다.
