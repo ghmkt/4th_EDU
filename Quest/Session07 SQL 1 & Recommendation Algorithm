@@ -6,6 +6,116 @@
 # 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
 # sklearn 모듈 내의 kfold 함수를 이용해 5-fold Cross Validation을 시행하고, Absolute Error의 평균을 최종적으로 출력해주세요.
 
+import pandas as pd
+import numpy as np
+from collections import defaultdict, Counter
+import surprise
+
+
+
+data=surprise.Dataset.load_builtin('ml-100k')
+
+
+df = pd.DataFrame(data.raw_ratings, columns = ['userId', 'movieId', 'rating', 'id'])
+df.head()
+#파일이 문자열 형태로 되있기 때문에 int 타입으로 바꿔줫음
+userId=pd.to_numeric(df['userId'])
+movieId=pd.to_numeric(df['movieId'])
+rating=pd.to_numeric(df['rating'])
+temp={"userId":userId,'movieId':movieId,'rating':rating}
+df=pd.DataFrame(temp,columns = ['userId', 'movieId','rating'])
+df
+
+cnt=Counter(df['movieId'])#IBCF이기 때문에 앞으로 계속 movieId 를 중심으로 식 진행
+
+
+idx_sorted = sorted(list(cnt.keys()),key=lambda x: -cnt[x]) # 빈도가 높은 순서대로 userId를 정렬
+print(idx_sorted[:400])
+
+idx = np.zeros(len(df)) # df의 전체 row 길이에 해당하는 vector를 만든 뒤에
+for i in idx_sorted[:400]:
+    idx += (df['movieId'] == i) # 빈도 400등까지의 userId에 해당하는 row에 1씩을 더해준 뒤,
+idx = np.array(idx, dtype=bool)
+print(idx)# Boolean 타입으로 바꾸어 줌. -> Bool Indexing을 위한 밑작업
+print(df[idx])
+
+new_df=df[idx].iloc[:,:3]
+x=np.array(new_df)
+x
+
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(new_df, test_size=0.3, random_state=1)
+
+utility_matrix = train.pivot(index='movieId', columns='userId', values='rating').fillna(0)
+
+utility_matrix.head()
+
+def cos_sim(x, y): 
+    return np.dot(x, y) ** 2 / (np.dot(x, x) * np.dot(y, y))
+
+def find_neighbors(utility_matrix, k, sim_fun): # 주어진 유사도를 기준으로 k개의 neighbor를 구해보자!
+    sim_dict = {} # 각 user들의 이웃들을 내포한 딕셔너리로 만들 것임!
+    cnt = 0 
+    for i in utility_matrix.index: # utility_matrix의 indexd인 movieId들
+        cnt += 1 
+        ranking = [(0,0)] *len(utility_matrix)
+        for j in utility_matrix.index.drop(i): # i를 제외한 나머지 userId에 대해 반복
+            ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) # (j, simmilarity between i & j) append
+            ranking = sorted(ranking, key=lambda x: -x[1])[:k] # 각 튜플의 뒤의 원소를 기준으로 내림차순한 뒤(유클리디언은 오름차순 해야됨), k개까지만 cut
+        sim_dict[i] = ranking # 위에서 만든 리스트를 sim_dict의 key = i에 대해 append함
+        if not cnt%10: print(cnt) # 10단위로 카운트 수를 출력... 얼마나 진행되고 있는지 시각적으로 확인코자 하는 수단
+    return sim_dict
+
+neighbors = find_neighbors(utility_matrix, 10, cos_sim)
+
+neighbors
+
+def prediction(movie,user, neighbors, utility_matrix): #한 영화에 대한 지정한 user의 이웃들이 매긴 영화 점수의 평균
+    my_neighbors = neighbors[movie] # 지정된 user의 이웃들을 꺼낸 뒤
+    rates = []
+    for i, _ in my_neighbors:
+        r = utility_matrix.loc[i, user] # 이웃의 해당 영화에 대한 평점을 꺼내옵니다
+        if r > 0: rates.append(r) # 정보가 있을 경우에 리스트에 append
+    if rates == []: return None # 만약 리스트가 비어있다면, None을 반환 (왜냐면, 이웃 중에 그 영화를 본 사람이 없는 것이므로)
+    else: return sum(rates)/len(rates)
+
+prediction(1,2, neighbors, utility_matrix)
+users= utility_matrix.columns
+users
+
+def testing(test, neighbors, utility_matrix): # test data에 대해 test하는 함수
+    predicted = []
+    users= utility_matrix.columns # train data에 있는 유저들
+    for i in range(len(test)): # test set에 대해 반복을 돌립니다
+        user = test.iloc[i,0]; movie = test.iloc[i,1] # 각 row의 movie, user Id를 따옴
+        if (movie not in neighbors) or (user not in users): # 만약 해당 user의 neighbor data가 없거나, movie가 train movie 목록에 없다면
+            predicted.append(None) # 그 데이터에 관해서는 test를 할 수 없음
+        else: predicted.append(prediction( movie,user, neighbors, utility_matrix)) # 아니라면 예측을 합니다
+    return predicted
+
+test['prediction'] = testing(test, neighbors, utility_matrix)
+
+test
+
+test['diff'] = test['rating'] - test['prediction']
+
+test['diff'].apply(abs).mean()
+
+from sklearn.model_selection import KFold  
+cv = KFold(n_splits=5, shuffle=True, random_state=0) 
+
+for train_index, test_index in cv.split(new_df): 
+    train = new_df.iloc[train_index,] 
+
+    test = new_df.iloc[test_index,] 
+
+    test['prediction'] = testing(test, neighbors, utility_matrix) 
+
+    test['diff'] = test['rating'] - test['prediction'] 
+    
+     
+    print(test['diff'].apply(abs).mean()) 
+
 
 # SQL 1
 
