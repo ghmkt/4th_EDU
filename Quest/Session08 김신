@@ -45,14 +45,14 @@ def trainNB00(trainMatrix,trainCategory):
     p0Num = zeros(numWords); p1Num = zeros(numWords) 
     p0Denom = 0.0; p1Denom = 0.0 #smoothing 계수 k의 역할을 하는듯
     for i in range(numTrainDocs): #문서의 개수(14개)만큼 루프를 돌리는데,
-        if trainCategory[i] == 1: #만약 스팸인 메일이라면,
-            p1Num += trainMatrix[i]  #필터링할 단어가 포함된 스팸메일 개수
-            p1Denom += sum(trainMatrix[i])
+        if trainCategory[i] == 1: #스팸인 경우,
+            p1Num += trainMatrix[i]  #단어가 등장한 횟수
+            p1Denom += sum(trainMatrix[i]) #총 단어의 개수
         else: #스팸이 아닌 메일이라면
             p0Num += trainMatrix[i] #필터링할 단어가 포함되었지만 스팸은 아닌 메일의 개수
-            p0Denom += sum(trainMatrix[i]) #
-    p1Vect = p1Num/p1Denom #책에는 smoothing 계수 k를 분자에 더하고 2k를 분모에 더해서 smoothing 한다고 했는데 왜 나누는지.. 잘 모르겠습니다
-    p0Vect = p0Num/p0Denom
+            p0Denom += sum(trainMatrix[i]) #총 단어의 개수
+    p1Vect = p1Num/p1Denom #스팸일 때 단어가 등장한 횟수를 총 단어 개수로 나누어준 것
+    p0Vect = p0Num/p0Denom #스팸이 아닐 때 단어가 등장한 횟수를 총 단어 개수로 나누어진 것
 
 # 다 동일하고 Denom수치에만 보정을 가한 듯(smoothing을 가한 것)
 def trainNB0(trainMatrix,trainCategory):
@@ -89,7 +89,7 @@ def bagOfWords2VecMN(vocabList, inputSet):
     return returnVec
 
 def testingNB():
-    listOPosts,listClasses = loadDataSet()
+    listOPosts,listClasses = loadDataSet() #아까처럼 메일 리스트와 , 스팸 여부를 확인하는 리스트를 불러오는 것
     myVocabList = createVocabList(listOPosts)
     trainMat=[]
     for postinDoc in listOPosts:
