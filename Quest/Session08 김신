@@ -1,5 +1,8 @@
+#솔직히 코드가 완전히 이해되지는 않아서.. 일단 되는데 까지 제출합니다 ㅜ..
+
 from numpy import *
 
+#이용할 데이터로 문자열들의 리스트를 가져오고, 스팸과 일반 메일을 분류할 0,1로 이루어진 리스트를 불러오는 함수이다.
 def loadDataSet():
     postingList=[['I', 'got', 'free', 'two', 'movie', 'ticket', 'from', 'your', 'boy', 'friend'],
                  ['free', 'coupon', 'from', 'xx.com'],
@@ -17,13 +20,16 @@ def loadDataSet():
                  ['coupon','promo','code','here']]
     classVec = [0,1,1,1,0,0,0,0,0,0,1,1,0,1]    #1 is spam, 0 not
     return postingList,classVec
-                 
+
+# postinglist 안의 14개 리스트들의 문자열들에서 단어들을 중복되지 않게 추출하여(set을 이용) 하나의 리스트에 담는 함수이다
 def createVocabList(dataSet):
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
+#먼저 vocablist의 길이만큼 0으로 이루어진 리스트를 만들고,
+#inputset에 들어 있는 단어가 vocablist에 있는 경우 0을 1로 바꾸어 주는 함수이다.
 def setOfWords2Vec(vocabList, inputSet):
     returnVec = [0]*len(vocabList)
     for word in inputSet:
@@ -33,22 +39,22 @@ def setOfWords2Vec(vocabList, inputSet):
     return returnVec
 
 def trainNB00(trainMatrix,trainCategory):
-    numTrainDocs = len(trainMatrix)
-    numWords = len(trainMatrix[0])
-    pSpam = sum(trainCategory)/float(numTrainDocs)
-    p0Num = zeros(numWords); p1Num = zeros(numWords)
+    numTrainDocs = len(trainMatrix) #문서의 개수 = 행의 길이
+    numWords = len(trainMatrix[0])  #단어의 개수 = 열의 길이
+    pSpam = sum(trainCategory)/float(numTrainDocs) #스팸일 확률 구하기 
+    p0Num = zeros(numWords); p1Num = zeros(numWords) 
     p0Denom = 0.0; p1Denom = 0.0
-    for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
+    for i in range(numTrainDocs): #문서의 개수(14개)만큼 루프를 돌리는데,
+        if trainCategory[i] == 1: #만약 스팸인 메일이라면, 
+            p1Num += trainMatrix[i] 
             p1Denom += sum(trainMatrix[i])
-        else:
+        else: #스팸이 아닌 메일이라면
             p0Num += trainMatrix[i]
-            p0Denom += sum(trainMatrix[i])
+            p0Denom += sum(trainMatrix[i]) #
     p1Vect = p1Num/p1Denom
     p0Vect = p0Num/p0Denom
-    return p0Vect,p1Vect,pSpam
 
+# 다 동일하고 Denom수치에만 보정을 가한 듯(smoothing을 가한 것 같음)
 def trainNB0(trainMatrix,trainCategory):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
@@ -66,6 +72,7 @@ def trainNB0(trainMatrix,trainCategory):
     p0Vect = log(p0Num/p0Denom)
     return p0Vect,p1Vect,pSpam
 
+#나이브 베이즈 분류기를 돌린다. p1이 p0보다 클 때 스팸으로 인식한다.
 def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
     p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult
     p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
