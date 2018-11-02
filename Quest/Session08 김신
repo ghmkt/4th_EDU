@@ -40,7 +40,7 @@ def setOfWords2Vec(vocabList, inputSet):
 
 def trainNB00(trainMatrix,trainCategory):
     numTrainDocs = len(trainMatrix) 
-    numWords = len(trainMatrix[0])  
+    numWords = len(trainMatrix[0])
     pSpam = sum(trainCategory)/float(numTrainDocs) #스팸일 확률 구하기 
     p0Num = zeros(numWords); p1Num = zeros(numWords) 
     p0Denom = 0.0; p1Denom = 0.0 #smoothing 계수 k의 역할을 하는듯
@@ -51,7 +51,7 @@ def trainNB00(trainMatrix,trainCategory):
         else: #스팸이 아닌 메일이라면
             p0Num += trainMatrix[i] #필터링할 단어가 포함되었지만 스팸은 아닌 메일의 개수
             p0Denom += sum(trainMatrix[i]) #
-    p1Vect = p1Num/p1Denom
+    p1Vect = p1Num/p1Denom #책에는 smoothing 계수 k를 분자에 더하고 2k를 분모에 더해서 smoothing 한다고 했는데 왜 나누는지.. 잘 모르겠습니다
     p0Vect = p0Num/p0Denom
 
 # 다 동일하고 Denom수치에만 보정을 가한 듯(smoothing을 가한 것)
