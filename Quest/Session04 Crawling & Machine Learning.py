@@ -33,11 +33,10 @@ for k in urls:
 
 
 
-# Machine Learning Quest는 아래 1, 2 중 택1입니다.
-
-# Machine Learning Quest 1
-# 'caschool.csv' 데이터에서 str과 avginc변수를 통해 read_scr을 예측할 수 있는 y=a*x1+b*x2+c 모형으로 Cost function을 minimize해보세요.
-
-# Machine Learning Quest 2
+# Machine Learning Quest
 # 앤드류 강의 week1과 week2에서 필요한 강의 듣고 중요 내용 요약해서 올리기
 # https://www.coursera.org/learn/machine-learning
+
+유진님께 갠톡으로 보냈습니다~!
+
+
