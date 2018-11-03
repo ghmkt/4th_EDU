@@ -1,6 +1,6 @@
 from numpy import *
 
-def loadDataSet():
+def loadDataSet(): #dataset 불러오는 함수, 여기선 그냥 리스트 하나당 문서하나로 쳐서 문서들 집합인 postingList만들어줌.
     postingList=[['I', 'got', 'free', 'two', 'movie', 'ticket', 'from', 'your', 'boy', 'friend'],
                  ['free', 'coupon', 'from', 'xx.com'],
                  ['watch', 'free', 'new', 'movie', 'from', 'freemovie.com'],
@@ -18,13 +18,13 @@ def loadDataSet():
     classVec = [0,1,1,1,0,0,0,0,0,0,1,1,0,1]    #1 is spam, 0 not
     return postingList,classVec
                  
-def createVocabList(dataSet):
+def createVocabList(dataSet):  # vocabSet에 원래 리스트 형태로 되있던 개별 document의 모든 unique한 값들 넣어줌. 
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
-def setOfWords2Vec(vocabList, inputSet):
+def setOfWords2Vec(vocabList, inputSet): 
     returnVec = [0]*len(vocabList)
     for word in inputSet:
         if word in vocabList:
@@ -203,3 +203,4 @@ def getTopWords(ny,sf):
         print item[0]
 
 testingNB()
+
