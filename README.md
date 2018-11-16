@@ -20,7 +20,7 @@
     - Session 10. Neural Network 1 - 천용희 (10/16)
     - Session 11. Neural Network 2 - 천용희 (10/18)
     - Session 12. Decision Tree - 양서윤 (10/20)
-    - Session 13. Marketing Strategy 1 - 김찬중 (11/10)
+    - Session 13. Marketing Strategy 1 - 김찬중 (11/17)
     - Session 14. Marketing Strategy 2 - 김찬중 (11/24)
 
 ## Quest
