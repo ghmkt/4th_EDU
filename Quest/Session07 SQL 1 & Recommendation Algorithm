@@ -6,9 +6,120 @@
 # 코사인 유사도를 기준으로 KNN 알고리즘을 작성해주세요. (k는 임의로 설정)
 # sklearn 모듈 내의 kfold 함수를 이용해 5-fold Cross Validation을 시행하고, Absolute Error의 평균을 최종적으로 출력해주세요.
 
+import pandas as pd
+import numpy as np
+from collections import defaultdict, Counter
+import surprise
+
+
+
+# 데이터 읽어오기
+
+data = surprise.Dataset.load_builtin('ml-100k') # 내장된 영화평 data가 있음
+df = pd.DataFrame(data.raw_ratings, columns = ['userId', 'movieId', 'rating', 'id'])
+df=df[['movieId','userId','rating']]
+
+
+# Top 400 뽑아오기 > new_df
+
+cnt = Counter(df['userId']) # 각 userId가 몇 번 등장했는지 count한 뒤에
+idx_sorted = sorted(list(cnt.keys()), key=lambda x: -cnt[x]) # 빈도가 높은 순서대로 userId를 정렬
+
+idx = np.zeros(len(df)) # df의 전체 row 길이에 해당하는 vector를 만든 뒤에
+for i in idx_sorted[:400]: # 400등으로 할지 더 할지는 내가 선택하기!
+    idx += (df['userId'] == i) # 빈도 400등까지의 userId에 해당하는 row에 1씩을 더해준 뒤,
+idx = np.array(idx, dtype=bool) # Boolean 타입으로 바꾸어 줌. -> Bool Indexing을 위한 밑작업
+
+new_df = df[idx].iloc[:,:3] # 위의 자료를 이용해 인덱싱을 한 뒤 새로운 df를 만드는데, 마지막 열(timestamp)은 날림
+del df # 기존 df는 지워줌. 메모리 절약을 위해 ~^*^~
+
+
+
+# 함수 정의하기 
+
+def cos_sim(x, y): # cosine 유사도를 return하는 함수를 define
+    return np.dot(x, y) ** 2 / (np.dot(x, x) * np.dot(y, y))
+
+def find_neighbors(utility_matrix, k, sim_fun): # 주어진 유사도를 기준으로 k개의 neighbor를 구해보자!
+    sim_dict = {} # 각 user들의 이웃들을 내포한 딕셔너리로 만들 것임!
+    for i in utility_matrix.index: # utility_matrix의 index들 = userId들
+        ranking = [(0,0)] * k
+        for j in utility_matrix.index.drop(i): # i를 제외한 나머지 userId에 대해 반복
+            ranking.append((j, sim_fun(utility_matrix.loc[i], utility_matrix.loc[j]))) # (j, simmilarity between i & j) append
+            ranking = sorted(ranking, key=lambda x: -x[1])[:k] # 각 튜플의 뒤의 원소를 기준으로 내림차순한 뒤(유클리디언은 오름차순 해야됨), k개까지만 cut
+        sim_dict[i] = ranking # 위에서 만든 리스트를 sim_dict의 key = i에 대해 append함
+    print('Find neighbor Complete!')
+    return sim_dict
+
+def prediction(user, movie, neighbors, utility_matrix): # 이제 neighbor들의 평균을 냄으로써 평점을 예측해봅시다
+    my_neighbors = neighbors[user] # 지정된 user의 이웃들을 꺼낸 뒤
+    rates = []
+    for i, _ in my_neighbors:
+        r = utility_matrix.loc[i, movie] # 이웃의 해당 영화에 대한 평점을 꺼내옵니다
+        if r > 0: rates.append(r) # 정보가 있을 경우에 리스트에 append
+    if rates == []: return None # 만약 리스트가 비어있다면, None을 반환 (왜냐면, 이웃 중에 그 영화를 본 사람이 없는 것이므로)
+    else: return sum(rates)/len(rates) # 아니라면 평균을 return합시다
+
+def testing(test, neighbors, utility_matrix): # test data에 대해 test하는 함수
+    predicted = []
+    movies = utility_matrix.columns # train data에 있는 영화 목록
+    for i in range(len(test)): # test set에 대해 반복을 돌립니다
+        movie = test.iloc[i,0]; user = test.iloc[i,1] # 각 row의 movie, user Id를 따옴
+        if (user not in neighbors) or (movie not in movies): # 만약 해당 user의 neighbor data가 없거나, movie가 train movie 목록에 없다면
+            predicted.append(None) # 그 데이터에 관해서는 test를 할 수 없음
+        else: predicted.append(prediction(user, movie, neighbors, utility_matrix)) # 아니라면 예측을 합니다
+    return predicted
+
+
+# Cross Validation 5번에 걸쳐서 각각 Absolute Error의 평균 구하기
+
+from sklearn.model_selection import KFold
+
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
+# train,test index 구하기
+cnt=0
+for train_index, test_index in cv.split(new_df):
+    cnt+=1
+    train = new_df.iloc[train_index,:]
+    test  = new_df.iloc[test_index,:]
+
+
+    # del new_df; del idx # 메모리 절약...!
+
+    utility_matrix = train.pivot(index='userId', columns='movieId', values='rating').fillna(0) # utility matrix 형태로 바꾸어 줌
+    # 즉, 각 row의 정보가 각 user의 정보이고, 각 column의 정보가 각 movie에 대한 정보가 되도록
+
+    neighbors = find_neighbors(utility_matrix, 5, cos_sim) # 참 느림... cos_sim2나 eucli로 하면 더 느려집니다 ^*^;;
+
+    # neighbors # 딕셔너리가 각 user들의 neighbor들을 잘 담고 있음!
+
+
+    test['prediction'] = testing(test, neighbors, utility_matrix) # 위 함수를 활용한 예측 칼럼을 만듦
+    test['diff'] = test['rating'] - test['prediction'] # 실제와 예측 간의 차이를 담은 column을 만듦
+
+    print(str(cnt)+'번째 Cross Validation 결과 Absolute Error의 평균: ',test['diff'].apply(abs).mean())
+    
+# 결과!    
+'''
+1번째 Cross Validation 결과 Absolute Error의 평균:  0.8737006237006264
+2번째 Cross Validation 결과 Absolute Error의 평균:  0.8896024464831847
+3번째 Cross Validation 결과 Absolute Error의 평균:  0.8781917194696841
+4번째 Cross Validation 결과 Absolute Error의 평균:  0.8669554107576374
+5번째 Cross Validation 결과 Absolute Error의 평균:  0.8753335879806482
+'''
 
 # SQL 1
 
 # QUEST 1. quest1 table 이용. 10,000원 이상이거나 재고액이 200,000이상인 제품들의 no, 가격, 재고수량, 재고액을 구해보세요. (열 이름 별칭 사용)
-
-# QUEST 2. sample2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+'''
+select no, price as 가격, quantity as 재고수량, price*quantity as 재고액 from quest1 
+where price>=10000 or price*quantity>=200000;
+'''
+# QUEST 2. quest2 table 이용. 사람들의 이름, 나이, 성인 여부를 구해보세요 (열 이름 별칭 사용)
+'''
+select name as 이름, year(current_timestamp())-year(birthday)+1 as 나이,
+case
+when year(current_timestamp())-year(birthday)+1 >=20 then 'yes'
+when year(current_timestamp())-year(birthday)+1 <  20 then 'no'
+end as '성인 여부' from quest2;
+'''
