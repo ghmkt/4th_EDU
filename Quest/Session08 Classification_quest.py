@@ -1,6 +1,6 @@
 from numpy import *
 
-def loadDataSet():
+def loadDataSet(): #데이터 불러오기
     postingList=[['I', 'got', 'free', 'two', 'movie', 'ticket', 'from', 'your', 'boy', 'friend'],
                  ['free', 'coupon', 'from', 'xx.com'],
                  ['watch', 'free', 'new', 'movie', 'from', 'freemovie.com'],
@@ -18,13 +18,13 @@ def loadDataSet():
     classVec = [0,1,1,1,0,0,0,0,0,0,1,1,0,1]    #1 is spam, 0 not
     return postingList,classVec
                  
-def createVocabList(dataSet):
+def createVocabList(dataSet): #중복된 단어 제외한 단어집합 생성하는 함수
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
-def setOfWords2Vec(vocabList, inputSet):
+def setOfWords2Vec(vocabList, inputSet): #입력집합 내 각 단어가 단어 집합에 있는 단어면 1, 아니면 0을 대응시킴 (벡터형태 반환)
     returnVec = [0]*len(vocabList)
     for word in inputSet:
         if word in vocabList:
@@ -32,7 +32,7 @@ def setOfWords2Vec(vocabList, inputSet):
         else: print "the word: %s is not in my Vocabulary!" % word
     return returnVec
 
-def trainNB00(trainMatrix,trainCategory):
+def trainNB00(trainMatrix,trainCategory): #
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
     pSpam = sum(trainCategory)/float(numTrainDocs)
@@ -41,7 +41,7 @@ def trainNB00(trainMatrix,trainCategory):
     for i in range(numTrainDocs):
         if trainCategory[i] == 1:
             p1Num += trainMatrix[i]
-            p1Denom += sum(trainMatrix[i])
+            p1Denom += sum(trainMatrix[i]) #원소 합은 리스트 내 1의 개수와 동일
         else:
             p0Num += trainMatrix[i]
             p0Denom += sum(trainMatrix[i])
@@ -49,27 +49,27 @@ def trainNB00(trainMatrix,trainCategory):
     p0Vect = p0Num/p0Denom
     return p0Vect,p1Vect,pSpam
 
-def trainNB0(trainMatrix,trainCategory):
-    numTrainDocs = len(trainMatrix)
-    numWords = len(trainMatrix[0])
-    pSpam = sum(trainCategory)/float(numTrainDocs)
-    p0Num = ones(numWords); p1Num = ones(numWords)
+def trainNB0(trainMatrix,trainCategory): #
+    numTrainDocs = len(trainMatrix) #문장 수
+    numWords = len(trainMatrix[0]) #단어 수
+    pSpam = sum(trainCategory)/float(numTrainDocs) #스팸문장 비율
+    p0Num = ones(numWords); p1Num = ones(numWords) 
     p0Denom = 2.0; p1Denom = 2.0
     for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
+        if trainCategory[i] == 1: #스팸인경우,
             p1Num += trainMatrix[i]
             p1Denom += sum(trainMatrix[i])
-        else:
+        else: #스팸아닌경우,
             p0Num += trainMatrix[i]
             p0Denom += sum(trainMatrix[i])
-    p1Vect = log(p1Num/p1Denom)
-    p0Vect = log(p0Num/p0Denom)
+    p1Vect = log(p1Num/p1Denom) #스팸 문장에서의 단어 비율 log값
+    p0Vect = log(p0Num/p0Denom) #비스팸 문장에서 단어 비율 log값
     return p0Vect,p1Vect,pSpam
 
-def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):#p1과 po 비교해서 스팸인지아닌지 판단
     p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult
     p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
-    if p1 > p0:
+    if p1 > p0: 
         return 1
     else: 
         return 0
@@ -143,7 +143,7 @@ def spamTest():
     print 'the error rate is: ',float(errorCount)/len(testSet)
     #return vocabList,fullText
 
-def calcMostFreq(vocabList,fullText):
+def calcMostFreq(vocabList,fullText): #전체 텍스트 안에서 최빈 단어 상위30개 반환
     import operator
     freqDict = {}
     for token in vocabList:
