@@ -1,5 +1,8 @@
+#솔직히 코드가 완전히 이해되지는 않아서.. 일단 되는데 까지 제출합니다 ㅜ..
+
 from numpy import *
 
+#이용할 데이터로 문자열들의 리스트를 가져오고, 스팸과 일반 메일을 분류할 0,1로 이루어진 리스트를 불러오는 함수이다.
 def loadDataSet():
     postingList=[['I', 'got', 'free', 'two', 'movie', 'ticket', 'from', 'your', 'boy', 'friend'],
                  ['free', 'coupon', 'from', 'xx.com'],
@@ -17,13 +20,16 @@ def loadDataSet():
                  ['coupon','promo','code','here']]
     classVec = [0,1,1,1,0,0,0,0,0,0,1,1,0,1]    #1 is spam, 0 not
     return postingList,classVec
-                 
+
+# postinglist 안의 14개 리스트들의 문자열들에서 단어들을 중복되지 않게 추출하여(set을 이용) 하나의 리스트에 담는 함수이다
 def createVocabList(dataSet):
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
+#먼저 vocablist의 길이만큼 0으로 이루어진 리스트를 만들고,
+#inputset에 들어 있는 단어가 vocablist에 있는 경우 0을 1로 바꾸어 주는 함수이다.
 def setOfWords2Vec(vocabList, inputSet):
     returnVec = [0]*len(vocabList)
     for word in inputSet:
@@ -33,22 +39,22 @@ def setOfWords2Vec(vocabList, inputSet):
     return returnVec
 
 def trainNB00(trainMatrix,trainCategory):
-    numTrainDocs = len(trainMatrix)
+    numTrainDocs = len(trainMatrix) 
     numWords = len(trainMatrix[0])
-    pSpam = sum(trainCategory)/float(numTrainDocs)
-    p0Num = zeros(numWords); p1Num = zeros(numWords)
-    p0Denom = 0.0; p1Denom = 0.0
-    for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
-            p1Denom += sum(trainMatrix[i])
-        else:
-            p0Num += trainMatrix[i]
-            p0Denom += sum(trainMatrix[i])
-    p1Vect = p1Num/p1Denom
-    p0Vect = p0Num/p0Denom
-    return p0Vect,p1Vect,pSpam
+    pSpam = sum(trainCategory)/float(numTrainDocs) #스팸일 확률 구하기 
+    p0Num = zeros(numWords); p1Num = zeros(numWords) 
+    p0Denom = 0.0; p1Denom = 0.0 #smoothing 계수 k의 역할을 하는듯
+    for i in range(numTrainDocs): #문서의 개수(14개)만큼 루프를 돌리는데,
+        if trainCategory[i] == 1: #스팸인 경우,
+            p1Num += trainMatrix[i]  #단어가 등장한 횟수
+            p1Denom += sum(trainMatrix[i]) #총 단어의 개수
+        else: #스팸이 아닌 메일이라면
+            p0Num += trainMatrix[i] #필터링할 단어가 포함되었지만 스팸은 아닌 메일의 개수
+            p0Denom += sum(trainMatrix[i]) #총 단어의 개수
+    p1Vect = p1Num/p1Denom #스팸일 때 단어가 등장한 횟수를 총 단어 개수로 나누어준 것
+    p0Vect = p0Num/p0Denom #스팸이 아닐 때 단어가 등장한 횟수를 총 단어 개수로 나누어진 것
 
+# 다 동일하고 Denom수치에만 보정을 가한 듯(smoothing을 가한 것)
 def trainNB0(trainMatrix,trainCategory):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
@@ -66,6 +72,7 @@ def trainNB0(trainMatrix,trainCategory):
     p0Vect = log(p0Num/p0Denom)
     return p0Vect,p1Vect,pSpam
 
+#나이브 베이즈 분류기를 돌린다. p1이 p0보다 클 때 스팸으로 인식한다. 스팸이면 1, 아니면 0을 반환한다
 def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
     p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult
     p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
@@ -82,7 +89,7 @@ def bagOfWords2VecMN(vocabList, inputSet):
     return returnVec
 
 def testingNB():
-    listOPosts,listClasses = loadDataSet()
+    listOPosts,listClasses = loadDataSet() #아까처럼 메일 리스트와 , 스팸 여부를 확인하는 리스트를 불러오는 것
     myVocabList = createVocabList(listOPosts)
     trainMat=[]
     for postinDoc in listOPosts:
@@ -90,15 +97,15 @@ def testingNB():
     #print(str(trainMat))
     p0V,p1V,pSpam = trainNB0(array(trainMat),array(listClasses))
 
-    testEntry = ['free', 'pizza', 'coupon']
+    testEntry = ['free', 'pizza', 'coupon'] # 이 세 단어가 들어가면 스팸으로 인식하려나 보다
     thisDoc = array(setOfWords2Vec(myVocabList, testEntry))
 
-    if classifyNB(thisDoc, p0V, p1V, pSpam) == 1:
+    if classifyNB(thisDoc, p0V, p1V, pSpam) == 1: # 스팸이라면 아래와 같은 문구를
         print testEntry, 'classified this is a spam'
-    else:
+    else: #스팸이 아니라면 아래와 같은 문구를
         print testEntry, 'classified this is not a spam'
 
-    testEntry = ['I', 'will', 'miss','free', 'pizza']
+    testEntry = ['I', 'will', 'miss','free', 'pizza'] #
     thisDoc = array(setOfWords2Vec(myVocabList, testEntry))
 
     if classifyNB(thisDoc,p0V,p1V,pSpam) == 1:
@@ -143,7 +150,7 @@ def spamTest():
     print 'the error rate is: ',float(errorCount)/len(testSet)
     #return vocabList,fullText
 
-def calcMostFreq(vocabList,fullText):
+def calcMostFreq(vocabList,fullText): #전체 텍스트에서 가장 빈번하게 등장하는 단어 30개를 도출
     import operator
     freqDict = {}
     for token in vocabList:
@@ -151,7 +158,7 @@ def calcMostFreq(vocabList,fullText):
     sortedFreq = sorted(freqDict.iteritems(), key=operator.itemgetter(1), reverse=True) 
     return sortedFreq[:30]       
 
-def localWords(feed1,feed0):
+def localWords(feed1,feed0): #아무래도 빈도수가 가장 높은 단어는 조사나 관사 등이 다수 포함되어 있을 수 있으므로 제외하고 학습시키는 듯
     import feedparser
     docList=[]; classList = []; fullText =[]
     minLen = min(len(feed1['entries']),len(feed0['entries']))
