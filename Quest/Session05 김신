@@ -1,0 +1,59 @@
+# 제출 시 제목은 Session05 이름으로 해주세요!
+# kNN&Clustering의 퀘스트 코드를 아래에 기입해주세요.
+
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+import sklearn
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+traininglist = listdir('trainingDigits')
+testlist = listdir('testDigits')
+print(traininglist[0]) #똑바로 가져왔는지 보기 위해
+
+# 1. 파일명을 인자로 받아서 (1, 1024) 백터를 반환하는 함수를 정의하세요.
+def returnVec(name):
+    filedir = "C:\\Users\\shin\\Desktop\\GH\\session 5\\trainingDigits\\" + name
+    df =  pd.read_csv(filedir, sep =" ", header = None)    
+    numbers = []
+    for i in range(32):
+            numbers.extend(df.iloc[i,0])
+    vector = np.array(list(map(int,numbers)))
+    return vector
+ len(returnVec(traininglist[0])) #1024
+
+# 2. 파일명을 인자로 받아서 Y값을 반환하는 함수를 정의하세요.
+def returnY(name):
+    y =int(name[0])
+    return y
+  
+# 3. 데이터를 X_train, y_train, X_test, y_test로 나누세요.
+X = []
+y = []
+for i in traininglist:
+    X.append(returnVec(i))
+    y.append(returnY(i))
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+# 4. 1~10의 k에 대해 KNN을 시행하고 테스트셋에 대한 스코어를 그래프로 그리세요 (sklearn 이용)
+
+accuracyset=[]
+for k in range(1,11):
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    test_pred = knn.predict(X_test)
+    accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
+    accuracyset.append(accuracy)
+    
+plt.plot(accuracyset)
+plt.show()
+
+# accuracyset의 3번째 값, 즉 k=3일때가 가장 클 것임(그래프상에선 x = 2에 해당하는 지점).
+knn = KNeighborsClassifier(n_neighbors=k)
+knn.fit(X_train, y_train)
+test_pred = knn.predict(X_test)
+accuracy = np.mean(np.array(y_test).astype(np.int32)== test_pred)
+print(k, ":", accuracy)
