@@ -17,30 +17,30 @@ def loadDataSet():
                  ['coupon','promo','code','here']]
     classVec = [0,1,1,1,0,0,0,0,0,0,1,1,0,1]    #1 is spam, 0 not
     return postingList,classVec
-                 
-def createVocabList(dataSet):
+
+def createVocabList(dataSet):    ### dataset 안에 있는 document들을 원소로 하는 set을 내보내주는 함수
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
 def setOfWords2Vec(vocabList, inputSet):
-    returnVec = [0]*len(vocabList)
+    returnVec = [0]*len(vocabList)  ### vocabList과 같은 길이의 벡터를 생성하고, 모두 0으로 채운다
     for word in inputSet:
-        if word in vocabList:
+        if word in vocabList:   ### inputSet에 있는 단어가 vocabList에 있는 단어이면 값을 1로 설정 
             returnVec[vocabList.index(word)] = 1
-        else: print "the word: %s is not in my Vocabulary!" % word
+        else: print ("the word: %s is not in my Vocabulary!" % word)
     return returnVec
 
-def trainNB00(trainMatrix,trainCategory):
+def trainNB0(trainMatrix,trainCategory):  ### trainMatrix는 문서의 행렬, trainCategory는 각 문서에 대한 분류항목
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
     pSpam = sum(trainCategory)/float(numTrainDocs)
-    p0Num = zeros(numWords); p1Num = zeros(numWords)
-    p0Denom = 0.0; p1Denom = 0.0
+    p0Num = zeros(numWords); p1Num = zeros(numWords) ### p0Num, p1Num은 단어의 개수
+    p0Denom = 0.0; p1Denom = 0.0 ### 분모를 0으로 맞춰서 초기화하기
     for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
+        if trainCategory[i] == 1: 
+            p1Num += trainMatrix[i]  ### 단어의 개수에 더하기
             p1Denom += sum(trainMatrix[i])
         else:
             p0Num += trainMatrix[i]
@@ -49,24 +49,7 @@ def trainNB00(trainMatrix,trainCategory):
     p0Vect = p0Num/p0Denom
     return p0Vect,p1Vect,pSpam
 
-def trainNB0(trainMatrix,trainCategory):
-    numTrainDocs = len(trainMatrix)
-    numWords = len(trainMatrix[0])
-    pSpam = sum(trainCategory)/float(numTrainDocs)
-    p0Num = ones(numWords); p1Num = ones(numWords)
-    p0Denom = 2.0; p1Denom = 2.0
-    for i in range(numTrainDocs):
-        if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
-            p1Denom += sum(trainMatrix[i])
-        else:
-            p0Num += trainMatrix[i]
-            p0Denom += sum(trainMatrix[i])
-    p1Vect = log(p1Num/p1Denom)
-    p0Vect = log(p0Num/p0Denom)
-    return p0Vect,p1Vect,pSpam
-
-def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):   ### vec2Classify는 분류를 위한 벡터, 나머지 3개는 trainNB0()에서 계산된 확률
     p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult
     p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
     if p1 > p0:
@@ -74,7 +57,7 @@ def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
     else: 
         return 0
     
-def bagOfWords2VecMN(vocabList, inputSet):
+def bagOfWords2VecMN(vocabList, inputSet):  ### the bag-of-words : 중복 단어 모델
     returnVec = [0]*len(vocabList)
     for word in inputSet:
         if word in vocabList:
